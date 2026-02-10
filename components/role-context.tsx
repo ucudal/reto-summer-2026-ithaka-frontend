@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react"
 
-type Role = "admin" | "tutor" | null
+type Role = "admin" | "coordinador" | "tutor" | null
 
 type RoleContextValue = {
   role: Role
@@ -21,7 +21,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem("role")
-      if (stored === "admin" || stored === "tutor") {
+      if (stored === "admin" || stored === "coordinador" || stored === "tutor") {
         setRole(stored)
       }
     } catch (e) {
