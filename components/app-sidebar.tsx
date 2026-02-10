@@ -30,7 +30,7 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        "flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200",
+        "relatiev flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200",
         collapsed ? "w-16" : "w-64"
       )}
     >
@@ -85,7 +85,7 @@ export function AppSidebar() {
 
       {/* Collapse toggle */}
       <div className="border-t border-sidebar-border px-3 py-3">
-        <button
+        {/* <button
           onClick={() => setCollapsed(!collapsed)}
           className="flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
           aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
@@ -95,8 +95,44 @@ export function AppSidebar() {
           ) : (
             <ChevronLeft className="h-4 w-4" />
           )}
-        </button>
+        </button> */}
+
+        {!collapsed && (
+          //TODO: cambiar juan y admin por valores reales
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-medium">
+              Juan
+            </span>
+            <span className="text-xs text-sidebar-foreground/60">
+              Administrador
+            </span>
+          </div>
+        )}
       </div>
-    </aside>
+
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="
+            absolute
+            top-1/2
+            left-1/8
+            translate-x-1/2
+            -translate-y-1/2
+            z-50
+            rounded-full
+            border
+            bg-sidebar
+            p-2
+            shadow-md
+          "
+        aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+      >
+        {collapsed ? (
+          <ChevronRight className="h-4 w-4" />
+        ) : (
+          <ChevronLeft className="h-4 w-4" />
+        )}
+      </button>
+    </aside> 
   )
 }
