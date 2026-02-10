@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
+import { useRole } from "@/components/role-context"
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -51,7 +52,12 @@ export function AppSidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4">
         <ul className="flex flex-col gap-1">
-          {navItems.map((item) => {
+          {(() => {
+            const { role } = useRole()
+            const items = role === "tutor"
+              ? navItems.filter(i => i.href === "/" || i.href === "/proyectos")
+              : navItems
+            return items.map((item) => {
             const isActive =
               item.href === "/"
                 ? pathname === "/"
@@ -72,7 +78,8 @@ export function AppSidebar() {
                 </Link>
               </li>
             )
-          })}
+            })
+          })()}
         </ul>
       </nav>
 
