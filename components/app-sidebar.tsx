@@ -95,7 +95,16 @@ export function AppSidebar() {
       </nav>
 
       {/* Collapse toggle */}
-      <div className="border-t border-sidebar-border px-3 py-3">
+      <div className="border-t border-sidebar-border px-3 py-3 space-y-2">
+        <button
+          onClick={() => {
+            const { setRole } = useRole()
+            setRole(null)
+          }}
+          className="w-full rounded-md border border-border px-3 py-2 text-xs hover:bg-muted transition-colors"
+        >
+          {!collapsed ? "Cambiar de rol" : "Cambiar"}
+        </button>
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"

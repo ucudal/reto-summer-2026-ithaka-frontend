@@ -18,25 +18,6 @@ const RoleContext = createContext<RoleContextValue>({
 export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<Role>(null)
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("role")
-      if (stored === "admin" || stored === "coordinador" || stored === "tutor") {
-        setRole(stored)
-      }
-    } catch (e) {
-      // ignore
-    }
-  }, [])
-
-  useEffect(() => {
-    try {
-      if (role) localStorage.setItem("role", role)
-    } catch (e) {
-      // ignore
-    }
-  }, [role])
-
   return (
     <RoleContext.Provider value={{ role, setRole }}>{children}</RoleContext.Provider>
   )
