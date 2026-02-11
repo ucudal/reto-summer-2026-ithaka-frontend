@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { useRole } from "@/components/role-context"
 
+
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/postulaciones", label: "Postulaciones", icon: Inbox },
@@ -26,6 +27,7 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const { role } = useRole()
 
   return (
     <aside
@@ -96,7 +98,7 @@ export function AppSidebar() {
             <ChevronLeft className="h-4 w-4" />
           )}
         </button> */}
-
+  
         {!collapsed && (
           //TODO: cambiar juan y admin por valores reales
           <div className="flex flex-col leading-tight">
@@ -104,7 +106,7 @@ export function AppSidebar() {
               Juan
             </span>
             <span className="text-xs text-sidebar-foreground/60">
-              Administrador
+              {role}
             </span>
           </div>
         )}
