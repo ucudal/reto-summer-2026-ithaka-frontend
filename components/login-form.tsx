@@ -38,32 +38,30 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      // TODO: Integrar con el backend para autenticación
-      // const response = await fetch('/api/login', {
-      //   method: 'POST',
-      //   body: JSON.stringify(form),
-      // })
-      // const data = await response.json();
-      // const userRole = data.role as Role;
+      // Credenciales hardcodeadas para testing
+      const validUsers: { [key: string]: { password: string; role: "admin" | "coordinador" | "tutor" | "operador" } } = {
+        "admin@ithaka.com": { password: "admin123", role: "admin" },
+        "coordinador@ithaka.com": { password: "coord123", role: "coordinador" },
+        "tutor@ithaka.com": { password: "tutor123", role: "tutor" },
+        "operador@ithaka.com": { password: "oper123", role: "operador" },
+      };
 
-      // Por ahora, asignamos un rol por defecto (cambiar según el backend)
-      let currentRole = "admin"; // esto en realidad viene del back cuando se loguea el usuario
+      const user = validUsers[form.email];
       
-      switch (currentRole) {
-        case "admin":
-          setRole("admin");
-          break;
-        case "coordinador":
-          setRole("coordinador");
-          break;
-        case "tutor":
-          setRole("tutor");
-          break;
-      } 
+      if (!user || user.password !== form.password) {
+        alert("Email o contraseña inválidos");
+        setLoading(false);
+        return;
+      }
+
+      // Setear rol según las credenciales
+      setRole(user.role);
+      
       // Redirigir al dashboard
       router.push("/");
     } catch (error) {   
       console.error("Login error:", error);
+      alert("Error al intentar loguearse");
     } finally {
       setLoading(false);
     }
