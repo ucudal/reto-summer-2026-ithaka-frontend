@@ -103,13 +103,13 @@ export function AppSidebar() {
           )}
 
           <button
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => {console.log("Hola")}}
             aria-label={collapsed ? "Abrir configuración" : "Cerrar configuración"}
             className="p-2 rounded-lg hover:bg-sidebar-accent transition"
           >
             <Image
               src={Logout}
-              alt="Settings"
+              alt="Logout"
               width={20}
               height={20}
             />
