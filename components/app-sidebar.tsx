@@ -2,6 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import Logout from "@/public/logout.png"
+import Image from "next/image";
 import {
   LayoutDashboard,
   Inbox,
@@ -87,30 +89,35 @@ export function AppSidebar() {
 
       {/* Collapse toggle */}
       <div className="border-t border-sidebar-border px-3 py-3">
-        {/* <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
-          aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
+        <div className="flex items-center justify-between">
+          
+          {!collapsed && (
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-medium">
+                Juan
+              </span>
+              <span className="text-xs text-sidebar-foreground/60">
+                {role}
+              </span>
+            </div>
           )}
-        </button> */}
-  
-        {!collapsed && (
-          //TODO: cambiar juan y admin por valores reales
-          <div className="flex flex-col leading-tight">
-            <span className="text-sm font-medium">
-              Juan
-            </span>
-            <span className="text-xs text-sidebar-foreground/60">
-              {role}
-            </span>
-          </div>
-        )}
+
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? "Abrir configuración" : "Cerrar configuración"}
+            className="p-2 rounded-lg hover:bg-sidebar-accent transition"
+          >
+            <Image
+              src={Logout}
+              alt="Settings"
+              width={20}
+              height={20}
+            />
+          </button>
+
+        </div>
       </div>
+
 
       <button
         onClick={() => setCollapsed(!collapsed)}
