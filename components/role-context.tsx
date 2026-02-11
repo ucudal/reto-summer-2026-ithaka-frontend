@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react"
 
-type Role = "admin" | "coordinador" | "tutor" | null
+type Role = "admin" | "coordinador" | "tutor" |null
 
 type RoleContextValue = {
   role: Role
