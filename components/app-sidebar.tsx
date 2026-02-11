@@ -10,9 +10,11 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
+import { useRole } from "@/components/role-context"
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -20,6 +22,7 @@ const navItems = [
   { href: "/proyectos", label: "Proyectos", icon: FolderKanban },
   { href: "/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
   { href: "/nueva-postulacion", label: "Nueva Postulacion", icon: FileText },
+  { href: "/gestion-usuarios", label: "Gestion de Usuarios", icon: Users, adminOnly: true },
 ]
 
 export function AppSidebar() {
@@ -51,33 +54,57 @@ export function AppSidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4">
         <ul className="flex flex-col gap-1">
-          {navItems.map((item) => {
-            const isActive =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href)
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                    isActive
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                  )}
-                >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span>{item.label}</span>}
-                </Link>
-              </li>
-            )
-          })}
+          {(() => {
+            const { role } = useRole()
+            
+            // Filtrar items según el rol
+            let items = navItems
+            if (role === "tutor") {
+              // Tutor: solo Dashboard y Proyectos
+              items = navItems.filter(i => i.href === "/" || i.href === "/proyectos")
+            } else if (role === "coordinador") {
+              // Coordinador: todo excepto Gestión de Usuarios
+              items = navItems.filter(i => !i.adminOnly)
+            }
+            // Admin: todos los items
+            
+            return items.map((item) => {
+              const isActive =
+                item.href === "/"
+                  ? pathname === "/"
+                  : pathname.startsWith(item.href)
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    {!collapsed && <span>{item.label}</span>}
+                  </Link>
+                </li>
+              )
+            })
+          })()}
         </ul>
       </nav>
 
       {/* Collapse toggle */}
-      <div className="border-t border-sidebar-border px-3 py-3">
+      <div className="border-t border-sidebar-border px-3 py-3 space-y-2">
+        <button
+          onClick={() => {
+            const { setRole } = useRole()
+            setRole(null)
+          }}
+          className="w-full rounded-md border border-border px-3 py-2 text-xs hover:bg-muted transition-colors"
+        >
+          {!collapsed ? "Cambiar de rol" : "Cambiar"}
+        </button>
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
