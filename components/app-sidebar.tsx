@@ -2,6 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import Logout from "@/public/logout.png"
+import Image from "next/image";
 import {
   LayoutDashboard,
   Inbox,
@@ -16,6 +18,7 @@ import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { useRole } from "@/components/role-context"
 
+
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/postulaciones", label: "Postulaciones", icon: Inbox },
@@ -28,11 +31,12 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const { role } = useRole()
 
   return (
     <aside
       className={cn(
-        "flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200",
+        "relatiev flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200",
         collapsed ? "w-16" : "w-64"
       )}
     >
@@ -95,28 +99,60 @@ export function AppSidebar() {
       </nav>
 
       {/* Collapse toggle */}
-      <div className="border-t border-sidebar-border px-3 py-3 space-y-2">
-        <button
-          onClick={() => {
-            const { setRole } = useRole()
-            setRole(null)
-          }}
-          className="w-full rounded-md border border-border px-3 py-2 text-xs hover:bg-muted transition-colors"
-        >
-          {!collapsed ? "Cambiar de rol" : "Cambiar"}
-        </button>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
-          aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
+      <div className="border-t border-sidebar-border px-3 py-3">
+        <div className="flex items-center justify-between">
+          
+          {!collapsed && (
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-medium">
+                Juan
+              </span>
+              <span className="text-xs text-sidebar-foreground/60">
+                {role}
+              </span>
+            </div>
           )}
-        </button>
+
+          <button
+            onClick={() => {console.log("Hola")}}
+            aria-label={collapsed ? "Abrir configuración" : "Cerrar configuración"}
+            className="p-2 rounded-lg hover:bg-sidebar-accent transition"
+          >
+            <Image
+              src={Logout}
+              alt="Logout"
+              width={20}
+              height={20}
+            />
+          </button>
+
+        </div>
       </div>
-    </aside>
+
+
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="
+            absolute
+            top-1/2
+            left-1/8
+            translate-x-1/2
+            -translate-y-1/2
+            z-50
+            rounded-full
+            border
+            bg-sidebar
+            p-2
+            shadow-md
+          "
+        aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+      >
+        {collapsed ? (
+          <ChevronRight className="h-4 w-4" />
+        ) : (
+          <ChevronLeft className="h-4 w-4" />
+        )}
+      </button>
+    </aside> 
   )
 }
