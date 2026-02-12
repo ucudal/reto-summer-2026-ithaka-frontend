@@ -26,7 +26,7 @@ export type TipoApoyo =
 
 export type EstadoApoyo = "activo" | "finalizado"
 
-export type Rol = "admin" | "coordinador" | "operador"
+export type Rol = "admin" | "coordinador" | "operador" | "tutor"
 
 // --------------- Entities ---------------
 

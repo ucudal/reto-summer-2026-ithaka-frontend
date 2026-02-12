@@ -22,7 +22,7 @@ Proveedor de contexto de React que gestiona el estado del rol del usuario.
 
 **Tipos:**
 ```typescript
-type Role = "admin" | "coordinador" | "tutor" | null
+type Role = "admin" | "coordinador" | "tutor" | "operador" | null
 type RoleContextValue = {
   role: Role
   setRole: (r: Role) => void

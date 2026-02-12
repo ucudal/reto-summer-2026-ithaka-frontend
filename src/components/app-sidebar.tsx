@@ -78,7 +78,7 @@ export function AppSidebar() {
 
       {/* Collapse toggle */}
       <div className="border-t border-sidebar-border px-3 py-3">
-        <button
+        <button type="button"
           onClick={() => setCollapsed(!collapsed)}
           className="flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
           aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}

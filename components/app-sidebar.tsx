@@ -14,9 +14,9 @@ import {
   ChevronRight,
   Users,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "@/src/lib/utils"
 import { useState } from "react"
-import { useRole } from "@/components/role-context"
+import { useRole } from "@/src/components/role-context"
 
 
 const navItems = [
