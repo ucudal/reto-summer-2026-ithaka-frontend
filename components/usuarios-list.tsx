@@ -77,7 +77,9 @@ export function UsuariosList() {
   function toggleEstado(usuario: Usuario) {
     setLoading(true)
     store.toggleUsuarioEstado(usuario.id)
-    loadData()
+    // Forzar actualización de estado
+    const data = store.getUsuarios()
+    setUsuarios([...data])
     setLoading(false)
   }
 
