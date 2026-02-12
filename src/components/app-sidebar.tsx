@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import Logout from "@/public/logout.png"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import Logout from "@/public/logout.png";
 import Image from "next/image";
 import {
   LayoutDashboard,
@@ -13,10 +13,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
-} from "lucide-react"
-import { cn } from "@/src/lib/utils"
-import { useState } from "react"
-import { useRole } from "@/src/components/role-context"
+} from "lucide-react";
+import { cn } from "@/src/lib/utils";
+import { useState } from "react";
+import { useRole } from "@/src/components/role-context";
+import { useAuthStore } from "@/src/hooks/useAuthStore";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -24,20 +25,26 @@ const navItems = [
   { href: "/proyectos", label: "Proyectos", icon: FolderKanban },
   { href: "/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
   { href: "/nueva-postulacion", label: "Nueva Postulacion", icon: FileText },
-  { href: "/gestion-usuarios", label: "Gestion de Usuarios", icon: Users, adminOnly: true },
-]
+  {
+    href: "/gestion-usuarios",
+    label: "Gestion de Usuarios",
+    icon: Users,
+    adminOnly: true,
+  },
+];
 
 export function AppSidebar() {
-  const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
-  const { role, setRole } = useRole()
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
+  const { role } = useRole();
+  const { startLogout } = useAuthStore();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   return (
     <aside
       className={cn(
-        "relative flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200",
-        collapsed ? "w-16" : "w-64"
+        "relatiev flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200",
+        collapsed ? "w-16" : "w-64",
       )}
     >
       {/* Logo area */}
@@ -50,7 +57,9 @@ export function AppSidebar() {
             <span className="text-sm font-semibold text-sidebar-accent-foreground">
               Ithaka
             </span>
-            <span className="text-xs text-sidebar-foreground/60">Backoffice</span>
+            <span className="text-xs text-sidebar-foreground/60">
+              Backoffice
+            </span>
           </div>
         )}
       </div>
@@ -59,23 +68,24 @@ export function AppSidebar() {
       <nav className="flex-1 px-3 py-4">
         <ul className="flex flex-col gap-1">
           {(() => {
-            
             // Filtrar items según el rol
-            let items = navItems
+            let items = navItems;
             if (role === "tutor") {
               // Tutor: solo Dashboard y Proyectos
-              items = navItems.filter(i => i.href === "/" || i.href === "/proyectos")
+              items = navItems.filter(
+                (i) => i.href === "/" || i.href === "/proyectos",
+              );
             } else if (role === "coordinador") {
               // Coordinador: todo excepto Gestión de Usuarios
-              items = navItems.filter(i => !i.adminOnly)
+              items = navItems.filter((i) => !i.adminOnly);
             }
             // Admin: todos los items
-            
+
             return items.map((item) => {
               const isActive =
                 item.href === "/"
                   ? pathname === "/"
-                  : pathname.startsWith(item.href)
+                  : pathname.startsWith(item.href);
               return (
                 <li key={item.href}>
                   <Link
@@ -84,15 +94,15 @@ export function AppSidebar() {
                       "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                       isActive
                         ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
                     )}
                   >
                     <item.icon className="h-4 w-4 shrink-0" />
                     {!collapsed && <span>{item.label}</span>}
                   </Link>
                 </li>
-              )
-            })
+              );
+            });
           })()}
         </ul>
       </nav>
@@ -100,15 +110,10 @@ export function AppSidebar() {
       {/* Collapse toggle */}
       <div className="border-t border-sidebar-border px-3 py-3">
         <div className="flex items-center justify-between">
-          
           {!collapsed && (
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-medium">
-                Juan
-              </span>
-              <span className="text-xs text-sidebar-foreground/60">
-                {role}
-              </span>
+              <span className="text-sm font-medium">Juan</span>
+              <span className="text-xs text-sidebar-foreground/60">{role}</span>
             </div>
           )}
 
@@ -116,17 +121,10 @@ export function AppSidebar() {
             onClick={() => setShowLogoutConfirm(true)}
             className="p-2 rounded-lg hover:bg-sidebar-accent transition"
           >
-            <Image
-              src={Logout}
-              alt="Logout"
-              width={20}
-              height={20}
-            />
+            <Image src={Logout} alt="Logout" width={20} height={20} />
           </button>
-
         </div>
       </div>
-
 
       <button
         onClick={() => setCollapsed(!collapsed)}
@@ -162,7 +160,7 @@ export function AppSidebar() {
             <p className="text-gray-600 text-sm mb-6">
               ¿Está seguro de que desea cerrar sesión?
             </p>
-            
+
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowLogoutConfirm(false)}
@@ -171,7 +169,7 @@ export function AppSidebar() {
                 Cancelar
               </button>
               <button
-                onClick={ () => setRole(null)}
+                onClick={() => { startLogout(); setShowLogoutConfirm(false); }}
                 className="px-4 py-2 rounded-md text-white bg-red-600 hover:bg-red-700 transition text-sm font-medium"
               >
                 Cerrar sesión
@@ -180,6 +178,6 @@ export function AppSidebar() {
           </div>
         </div>
       )}
-    </aside> 
-  )
+    </aside>
+  );
 }
