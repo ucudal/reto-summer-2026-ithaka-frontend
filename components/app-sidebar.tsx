@@ -128,11 +128,11 @@ export function AppSidebar() {
       </div>
 
 
-      <button
+      {(role === "admin" || role === "coordinador") && <button
         onClick={() => setCollapsed(!collapsed)}
         className="
             absolute
-            top-1/2
+            bottom-1/3
             left-1/8
             translate-x-1/2
             -translate-y-1/2
@@ -150,7 +150,31 @@ export function AppSidebar() {
         ) : (
           <ChevronLeft className="h-4 w-4" />
         )}
-      </button>
+      </button>}
+
+      {role === "tutor" && <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="
+            absolute
+            top-1/3
+            left-1/8
+            translate-x-1/2
+            -translate-y-1/2
+            z-50
+            rounded-full
+            border
+            bg-sidebar
+            p-2
+            shadow-md
+          "
+        aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+      >
+        {collapsed ? (
+          <ChevronRight className="h-4 w-4" />
+        ) : (
+          <ChevronLeft className="h-4 w-4" />
+        )}
+      </button>}
 
       {/* Confirmacion de logout */}
       {showLogoutConfirm && (
