@@ -18,7 +18,6 @@ import { cn } from "@/src/lib/utils"
 import { useState } from "react"
 import { useRole } from "@/src/components/role-context"
 
-
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/postulaciones", label: "Postulaciones", icon: Inbox },
@@ -31,7 +30,8 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
-  const { role } = useRole()
+  const { role, setRole } = useRole()
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   return (
     <aside
@@ -59,7 +59,6 @@ export function AppSidebar() {
       <nav className="flex-1 px-3 py-4">
         <ul className="flex flex-col gap-1">
           {(() => {
-            const { role } = useRole()
             
             // Filtrar items según el rol
             let items = navItems
@@ -114,8 +113,7 @@ export function AppSidebar() {
           )}
 
           <button
-            onClick={() => {console.log("Hola")}}
-            aria-label={collapsed ? "Abrir configuración" : "Cerrar configuración"}
+            onClick={() => setShowLogoutConfirm(true)}
             className="p-2 rounded-lg hover:bg-sidebar-accent transition"
           >
             <Image
@@ -153,6 +151,35 @@ export function AppSidebar() {
           <ChevronLeft className="h-4 w-4" />
         )}
       </button>
+
+      {/* Confirmacion de logout */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Confirmar cierre de sesión
+            </h2>
+            <p className="text-gray-600 text-sm mb-6">
+              ¿Está seguro de que desea cerrar sesión?
+            </p>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="px-4 py-2 rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 transition text-sm font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={ () => setRole(null)}
+                className="px-4 py-2 rounded-md text-white bg-red-600 hover:bg-red-700 transition text-sm font-medium"
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside> 
   )
 }
