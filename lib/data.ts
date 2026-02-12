@@ -620,6 +620,14 @@ class IthakaStore {
     }
     return u
   }
+  deleteUsuario(id: string) {
+    const index = this.usuarios.findIndex((u) => u.id === id)
+    if (index > -1) {
+      this.usuarios.splice(index, 1)
+      return true
+    }
+    return false
+  }
 
   // --- Postulaciones ---
   getPostulaciones() {

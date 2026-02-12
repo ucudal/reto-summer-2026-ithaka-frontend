@@ -32,7 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Search, Plus } from "lucide-react"
+import { Search, Plus, Trash2 } from "lucide-react"
 
 export function UsuariosList() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
@@ -41,6 +41,7 @@ export function UsuariosList() {
   const [filterEstado, setFilterEstado] = useState<string>("all")
   const [filterComunidad, setFilterComunidad] = useState<string>("all")
   const [editDialog, setEditDialog] = useState<Usuario | null>(null)
+  const [deleteDialog, setDeleteDialog] = useState<Usuario | null>(null)
   const [loading, setLoading] = useState(false)
 
   const loadData = useCallback(() => {
@@ -80,6 +81,16 @@ export function UsuariosList() {
     // Forzar actualización de estado
     const data = store.getUsuarios()
     setUsuarios([...data])
+    setLoading(false)
+  }
+
+  function deleteUsuario() {
+    if (!deleteDialog) return
+    setLoading(true)
+    store.deleteUsuario(deleteDialog.id)
+    const data = store.getUsuarios()
+    setUsuarios([...data])
+    setDeleteDialog(null)
     setLoading(false)
   }
 
@@ -225,7 +236,7 @@ export function UsuariosList() {
                 <TableHead>COMUNIDAD</TableHead>
                 <TableHead>ESTADO</TableHead>
                 <TableHead>ÚLTIMO ACCESO</TableHead>
-                <TableHead className="text-right">ACCIONES</TableHead>
+                <TableHead className="text-left pl-8">ACCIONES</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -287,6 +298,15 @@ export function UsuariosList() {
                         >
                           {u.estado === "activo" ? "Desactivar" : "Activar"}
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setDeleteDialog(u)}
+                          disabled={loading}
+                          className="hover:bg-red-50 hover:text-red-600 hover:border-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -296,6 +316,30 @@ export function UsuariosList() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Delete Dialog */}
+      <Dialog open={!!deleteDialog} onOpenChange={() => setDeleteDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar usuario</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que deseas eliminar a {deleteDialog?.nombre}? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialog(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={deleteUsuario}
+              disabled={loading}
+            >
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
