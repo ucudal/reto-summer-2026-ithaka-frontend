@@ -43,7 +43,7 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        "relatiev flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200",
+        "relative flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200",
         collapsed ? "w-16" : "w-64",
       )}
     >
@@ -75,7 +75,7 @@ export function AppSidebar() {
               items = navItems.filter(
                 (i) => i.href === "/" || i.href === "/proyectos",
               );
-            } else if (role === "coordinador") {
+            } else if (role === "coordinador"|| role === "operador") {
               // Coordinador: todo excepto Gestión de Usuarios
               items = navItems.filter((i) => !i.adminOnly);
             }
@@ -117,7 +117,7 @@ export function AppSidebar() {
             </div>
           )}
 
-          <button
+          <button type="button"
             onClick={() => setShowLogoutConfirm(true)}
             className="p-2 rounded-lg hover:bg-sidebar-accent transition"
           >
