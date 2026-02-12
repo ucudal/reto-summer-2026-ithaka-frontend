@@ -1,7 +1,9 @@
 import React from "react"
+import { AppShell } from "@/src/components/app-shell"
 
 export default function GestionUsuariosPage() {
   return (
+    <AppShell>
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Gestión de Usuarios</h1>
@@ -20,5 +22,6 @@ export default function GestionUsuariosPage() {
         </div>
       </div>
     </div>
+    </AppShell>
   )
 }

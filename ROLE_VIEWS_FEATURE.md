@@ -6,6 +6,7 @@ Se ha implementado un sistema de roles para restringir el acceso a diferentes vi
 
 - **Tutor**: acceso limitado a Dashboard y Proyectos.
 - **Coordinador**: acceso a todas las vistas excepto Gestión de Usuarios.
+- **Operador**: acceso a todas las vistas excepto Gestión de Usuarios.
 - **Admin**: acceso completo, incluyendo Gestión de Usuarios.
 
 ## Cambios Realizados
