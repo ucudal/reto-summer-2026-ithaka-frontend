@@ -42,7 +42,19 @@ export function UsuariosList() {
   const [filterComunidad, setFilterComunidad] = useState<string>("all")
   const [editDialog, setEditDialog] = useState<Usuario | null>(null)
   const [deleteDialog, setDeleteDialog] = useState<Usuario | null>(null)
+  const [newUserDialog, setNewUserDialog] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [newUser, setNewUser] = useState({
+    nombre: "",
+    email: "",
+    rol: "tutor" as Rol,
+    comunidad: "docente_funcionario" as TipoComunidad,
+    estado: "activo" as EstadoUsuario,
+  })
+  const [formErrors, setFormErrors] = useState({
+    nombre: "",
+    email: "",
+  })
 
   const loadData = useCallback(() => {
     const data = store.getUsuarios()
@@ -94,6 +106,70 @@ export function UsuariosList() {
     setLoading(false)
   }
 
+  function isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  function validateAndSetErrors() {
+    const errors = { nombre: "", email: "" }
+    if (!newUser.nombre.trim()) {
+      errors.nombre = "El nombre es requerido"
+    }
+    if (!newUser.email.trim()) {
+      errors.email = "El email es requerido"
+    } else if (!isValidEmail(newUser.email)) {
+      errors.email = "El email no es válido"
+    }
+    setFormErrors(errors)
+    return Object.values(errors).every((err) => err === "")
+  }
+
+  function validateForm(): boolean {
+    if (!newUser.nombre.trim()) {
+      return false
+    }
+    if (!newUser.email.trim()) {
+      return false
+    }
+    if (!isValidEmail(newUser.email)) {
+      return false
+    }
+    return true
+  }
+
+  function createNewUsuario() {
+    if (!validateAndSetErrors()) {
+      return
+    }
+    setLoading(true)
+    const initials = newUser.nombre
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+    store.addUsuario({
+      nombre: newUser.nombre,
+      email: newUser.email,
+      rol: newUser.rol,
+      comunidad: newUser.comunidad,
+      estado: "activo",
+      fotoPerfil: `https://ui-avatars.com/api/?name=${initials}&background=354558&color=fff&bold=true`,
+      ultimoAcceso: new Date().toISOString(),
+    })
+    const data = store.getUsuarios()
+    setUsuarios([...data])
+    setNewUserDialog(false)
+    setNewUser({
+      nombre: "",
+      email: "",
+      rol: "tutor",
+      comunidad: "docente_funcionario",
+      estado: "activo",
+    })
+    setLoading(false)
+  }
+
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString("es-UY", {
       day: "2-digit",
@@ -112,7 +188,7 @@ export function UsuariosList() {
             Administra los usuarios y permisos del sistema
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setNewUserDialog(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nuevo usuario
         </Button>
@@ -236,7 +312,7 @@ export function UsuariosList() {
                 <TableHead>COMUNIDAD</TableHead>
                 <TableHead>ESTADO</TableHead>
                 <TableHead>ÚLTIMO ACCESO</TableHead>
-                <TableHead className="text-left pl-8">ACCIONES</TableHead>
+                <TableHead className="text-left">ACCIONES</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -287,25 +363,15 @@ export function UsuariosList() {
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDate(u.ultimoAcceso)}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
+                    <TableCell className="text-left pl-4">
+                      <div className="flex items-center">
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => toggleEstado(u)}
+                          onClick={() => setEditDialog(u)}
                           disabled={loading}
-                          className={u.estado === "activo" ? "hover:bg-red-50 hover:text-red-600 hover:border-red-600" : "hover:bg-green-50 hover:text-green-600 hover:border-green-600"}
                         >
-                          {u.estado === "activo" ? "Desactivar" : "Activar"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setDeleteDialog(u)}
-                          disabled={loading}
-                          className="hover:bg-red-50 hover:text-red-600 hover:border-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
+                          Editar
                         </Button>
                       </div>
                     </TableCell>
@@ -336,6 +402,255 @@ export function UsuariosList() {
               disabled={loading}
             >
               Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New User Dialog */}
+      <Dialog 
+        open={newUserDialog} 
+        onOpenChange={(open) => {
+          setNewUserDialog(open)
+          if (!open) {
+            setFormErrors({ nombre: "", email: "" })
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md md:max-w-lg lg:max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nuevo Usuario</DialogTitle>
+            <DialogDescription>
+              Completa los datos para crear un nuevo usuario
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Información Personal */}
+            <div>
+              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                <span>👤</span> Información Personal
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-2 block">Nombre</label>
+                  <Input
+                    placeholder="Nombre completo"
+                    value={newUser.nombre}
+                    onChange={(e) => setNewUser({ ...newUser, nombre: e.target.value })}
+                    className={formErrors.nombre ? "border-red-500" : ""}
+                  />
+                  {formErrors.nombre && (
+                    <p className="text-xs text-red-500 mt-1">{formErrors.nombre}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-2 block">Email</label>
+                  <Input
+                    placeholder="correo@ejemplo.com"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                    className={formErrors.email ? "border-red-500" : ""}
+                  />
+                  {formErrors.email && (
+                    <p className="text-xs text-red-500 mt-1">{formErrors.email}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-2 block">Rol</label>
+                  <Select value={newUser.rol} onValueChange={(value) => setNewUser({ ...newUser, rol: value as Rol })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="coordinador">Coordinador</SelectItem>
+                      <SelectItem value="tutor">Tutor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-2 block">Comunidad</label>
+                  <Select value={newUser.comunidad} onValueChange={(value) => setNewUser({ ...newUser, comunidad: value as TipoComunidad })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="docente_funcionario">Docente/Funcionario UCU</SelectItem>
+                      <SelectItem value="alumni">Alumni</SelectItem>
+                      <SelectItem value="estudiante">Estudiante</SelectItem>
+                      <SelectItem value="externo">Externo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="border-t pt-4">
+            <Button variant="outline" onClick={() => setNewUserDialog(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={createNewUsuario}
+              disabled={loading || !newUser.nombre.trim() || !newUser.email.trim() || !isValidEmail(newUser.email)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Crear Usuario
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={!!editDialog} onOpenChange={() => setEditDialog(null)}>
+        <DialogContent className="sm:max-w-md md:max-w-lg lg:max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Configuración de Usuario</DialogTitle>
+            <DialogDescription>
+              Gestiona el perfil y permisos del usuario
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editDialog && (
+            <div className="space-y-6">
+              {/* Información Personal */}
+              <div>
+                <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                  <span>👤</span> Información Personal
+                </h3>
+                <div className="flex gap-4 items-start mb-6">
+                  <div>
+                    <Avatar className="h-24 w-24">
+                      <AvatarImage src={editDialog.fotoPerfil} alt={editDialog.nombre} />
+                      <AvatarFallback>
+                        {editDialog.nombre
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">Nombre</label>
+                      <p className="text-sm font-medium">{editDialog.nombre}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">Email</label>
+                      <p className="text-sm">{editDialog.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">Último Acceso</label>
+                      <p className="text-sm">{formatDate(editDialog.ultimoAcceso)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Configuración */}
+              <div className="space-y-4 border-t pt-4">
+                <h3 className="text-sm font-semibold">Configuración</h3>
+                
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-2 block">Rol</label>
+                  <Select 
+                    value={editDialog.rol || "tutor"} 
+                    onValueChange={(value) => {
+                      if (editDialog) {
+                        store.updateUsuario(editDialog.id, { rol: value as Rol })
+                        const data = store.getUsuarios()
+                        setUsuarios([...data])
+                        setEditDialog(store.getUsuario(editDialog.id) || null)
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="coordinador">Coordinador</SelectItem>
+                      <SelectItem value="tutor">Tutor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-2 block">Comunidad</label>
+                  <Select 
+                    value={editDialog.comunidad || "docente_funcionario"} 
+                    onValueChange={(value) => {
+                      if (editDialog) {
+                        store.updateUsuario(editDialog.id, { comunidad: value as TipoComunidad })
+                        const data = store.getUsuarios()
+                        setUsuarios([...data])
+                        setEditDialog(store.getUsuario(editDialog.id) || null)
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="docente_funcionario">Docente/Funcionario UCU</SelectItem>
+                      <SelectItem value="alumni">Alumni</SelectItem>
+                      <SelectItem value="estudiante">Estudiante</SelectItem>
+                      <SelectItem value="externo">Externo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-2 block">Estado</label>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={editDialog.estado} />
+                    <span className="text-xs text-muted-foreground">
+                      {editDialog.estado === "activo" ? "Usuario activo" : "Usuario inactivo"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Acciones */}
+              <div className="space-y-2 border-t pt-4">
+                <h3 className="text-sm font-semibold mb-3">Acciones</h3>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (editDialog) {
+                        toggleEstado(editDialog)
+                        setEditDialog(store.getUsuario(editDialog.id) || null)
+                      }
+                    }}
+                    className={editDialog.estado === "activo" ? "hover:bg-red-50 hover:text-red-600 hover:border-red-600 text-xs" : "hover:bg-green-50 hover:text-green-600 hover:border-green-600 text-xs"}
+                  >
+                    {editDialog.estado === "activo" ? "Desactivar Usuario" : "Activar Usuario"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => {
+                      setEditDialog(null)
+                      setDeleteDialog(editDialog)
+                    }}
+                  >
+                    Eliminar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="border-t pt-4">
+            <Button variant="outline" onClick={() => setEditDialog(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={() => setEditDialog(null)} className="bg-blue-600 hover:bg-blue-700">
+              Guardar cambios
             </Button>
           </DialogFooter>
         </DialogContent>
