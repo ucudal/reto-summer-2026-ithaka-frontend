@@ -1,20 +1,20 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { store } from "@/lib/data"
-import type { Usuario, Rol, EstadoUsuario, TipoComunidad } from "@/lib/data"
-import { ROL_LABELS, COMUNIDAD_LABELS } from "@/lib/data"
-import { StatusBadge } from "@/components/status-badge"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { store } from "@/src/lib/data"
+import type { Usuario, Rol, EstadoUsuario, TipoComunidad } from "@/src/lib/data"
+import { ROL_LABELS, COMUNIDAD_LABELS } from "@/src/lib/data"
+import { StatusBadge } from "@/src/components/status-badge"
+import { Card, CardContent } from "@/src/components/ui/card"
+import { Input } from "@/src/components/ui/input"
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
+} from "@/src/components/ui/select"
+import { Button } from "@/src/components/ui/button"
 import {
     Dialog,
     DialogContent,
@@ -22,7 +22,7 @@ import {
     DialogTitle,
     DialogDescription,
     DialogFooter,
-} from "@/components/ui/dialog"
+} from "@/src/components/ui/dialog"
 import {
     Table,
     TableBody,
@@ -30,8 +30,8 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+} from "@/src/components/ui/table"
+import { Avatar, AvatarImage, AvatarFallback } from "@/src/components/ui/avatar"
 import { Search, Plus } from "lucide-react"
 
 export function UsuariosList() {

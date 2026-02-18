@@ -2269,6 +2269,8 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
+optional: true
+
 snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
@@ -4203,4 +4205,5 @@ snapshots:
       d3-shape: 3.2.0
       d3-time: 3.1.0
       d3-timer: 3.0.1
-optional: true
+
+  zod@3.25.76: {}
