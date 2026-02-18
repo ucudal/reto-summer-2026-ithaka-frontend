@@ -24,7 +24,6 @@ const navItems = [
   { href: "/postulaciones", label: "Postulaciones", icon: Inbox },
   { href: "/proyectos", label: "Proyectos", icon: FolderKanban },
   { href: "/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
-  { href: "/nueva-postulacion", label: "Nueva Postulacion", icon: FileText },
   {
     href: "/gestion-usuarios",
     label: "Gestion de Usuarios",

@@ -91,12 +91,6 @@ export function PostulacionesList() {
             Bandeja de entrada de postulaciones desde el chatbot
           </p>
         </div>
-        <Link href="/nueva-postulacion">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nueva postulacion
-          </Button>
-        </Link>
       </div>
 
       {/* Filters */}

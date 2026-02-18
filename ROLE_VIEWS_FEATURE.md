@@ -91,7 +91,6 @@ const navItems = [
   { href: "/postulaciones", label: "Postulaciones", icon: Inbox },
   { href: "/proyectos", label: "Proyectos", icon: FolderKanban },
   { href: "/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
-  { href: "/nueva-postulacion", label: "Nueva Postulacion", icon: FileText },
   { href: "/gestion-usuarios", label: "Gestion de Usuarios", icon: Users, adminOnly: true },
 ]
 
@@ -108,7 +107,7 @@ if (role === "tutor") {
 
 **Impacto:**
 - **Tutor**: solo ve Dashboard (`/`) y Proyectos (`/proyectos`).
-- **Coordinador**: ve Dashboard, Postulaciones, Proyectos, Evaluaciones, Nueva Postulación (todo menos Gestión de Usuarios).
+- **Coordinador**: ve Dashboard, Postulaciones, Proyectos, Evaluaciones (todo menos Gestión de Usuarios).
 - **Admin**: ve todas las opciones incluyendo Gestión de Usuarios (`/gestion-usuarios`).
 
 #### `app/gestion-usuarios/page.tsx`
@@ -168,7 +167,6 @@ User accede directamente a la app
 - `/proyectos` (Proyectos)
 - `/proyectos/[id]` (Detalle de Proyecto)
 - `/evaluaciones` (Evaluaciones)
-- `/nueva-postulacion` (Nueva Postulación)
 
 ### Admin
 - `/` (Dashboard)
@@ -176,7 +174,6 @@ User accede directamente a la app
 - `/proyectos` (Proyectos)
 - `/proyectos/[id]` (Detalle de Proyecto)
 - `/evaluaciones` (Evaluaciones)
-- `/nueva-postulacion` (Nueva Postulación)
 - `/gestion-usuarios` (Gestión de Usuarios)
 
 ## Estructura del Código
@@ -279,7 +276,7 @@ http://localhost:3000
 - Ejecutar: `localStorage.removeItem('role')`.
 - Recargar la página.
 - Clickear "Coordinador".
-- Verificar que la sidebar muestra Dashboard, Postulaciones, Proyectos, Evaluaciones, Nueva Postulación (pero NO Gestión de Usuarios).
+- Verificar que la sidebar muestra Dashboard, Postulaciones, Proyectos, Evaluaciones (pero NO Gestión de Usuarios).
 
 ### Paso 6: Cambiar a Admin
 - Abrir DevTools → Console.
