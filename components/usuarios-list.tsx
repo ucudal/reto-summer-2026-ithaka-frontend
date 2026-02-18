@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { store } from "@/lib/data"
 import type { Usuario, Rol, EstadoUsuario, TipoComunidad } from "@/lib/data"
-import { ROL_LABELS, ESTADO_USUARIO_LABELS, COMUNIDAD_LABELS } from "@/lib/data"
+import { ROL_LABELS, COMUNIDAD_LABELS } from "@/lib/data"
 import { StatusBadge } from "@/components/status-badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -32,7 +32,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Search, Plus, Trash2 } from "lucide-react"
+import { Search, Plus } from "lucide-react"
 
 export function UsuariosList() {
     const [usuarios, setUsuarios] = useState<Usuario[]>([])
@@ -105,15 +105,6 @@ export function UsuariosList() {
         }).length,
     }
 
-    function toggleEstado(usuario: Usuario) {
-        setLoading(true)
-        store.toggleUsuarioEstado(usuario.id)
-        // Forzar actualización de estado
-        const data = store.getUsuarios()
-        setUsuarios([...data])
-        setLoading(false)
-    }
-
     function deleteUsuario() {
         if (!deleteDialog) return
         setLoading(true)
@@ -179,19 +170,6 @@ export function UsuariosList() {
         }
         setFormErrors(errors)
         return Object.values(errors).every((err) => err === "")
-    }
-
-    function validateForm(): boolean {
-        if (!newUser.nombre.trim()) {
-            return false
-        }
-        if (!newUser.email.trim()) {
-            return false
-        }
-        if (!isValidEmail(newUser.email)) {
-            return false
-        }
-        return true
     }
 
     function createNewUsuario() {
