@@ -1,5 +1,8 @@
+"use client"
+
 import { Badge } from "@/src/components/ui/badge"
 import { cn } from "@/src/lib/utils"
+import { getEstadoApoyoLabel, getEstadoPostulacionLabel, getEstadoProyectoLabel, useI18n } from "@/src/lib/i18n"
 
 const statusStyles: Record<string, string> = {
   borrador: "bg-muted text-muted-foreground",
@@ -12,18 +15,16 @@ const statusStyles: Record<string, string> = {
   finalizado: "bg-muted text-muted-foreground",
 }
 
-const statusLabels: Record<string, string> = {
-  borrador: "Borrador",
-  recibida: "Recibida",
-  en_evaluacion: "En evaluacion",
-  proyecto_activo: "Proyecto activo",
-  incubado: "Incubado",
-  cerrado: "Cerrado",
-  activo: "Activo",
-  finalizado: "Finalizado",
-}
-
 export function StatusBadge({ status }: { status: string }) {
+  const { lang } = useI18n()
+  const label =
+    (status === "borrador" || status === "recibida")
+      ? getEstadoPostulacionLabel(lang, status)
+      : (status === "en_evaluacion" || status === "proyecto_activo" || status === "incubado" || status === "cerrado")
+        ? getEstadoProyectoLabel(lang, status)
+        : (status === "activo" || status === "finalizado")
+          ? getEstadoApoyoLabel(lang, status)
+          : status
   return (
     <Badge
       variant="outline"
@@ -32,7 +33,7 @@ export function StatusBadge({ status }: { status: string }) {
         statusStyles[status] || "bg-muted text-muted-foreground"
       )}
     >
-      {statusLabels[status] || status}
+      {label}
     </Badge>
   )
 }

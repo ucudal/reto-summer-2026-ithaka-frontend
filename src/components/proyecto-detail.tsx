@@ -13,11 +13,8 @@ import {
   getAuditForEntity,
 } from "@/src/app/actions"
 import type { Proyecto, AuditEntry, EstadoProyecto, TipoApoyo } from "@/src/lib/data"
-import {
-  ESTADO_PROYECTO_LABELS,
-  TIPO_APOYO_LABELS,
-  RESPONSABLES_ITHAKA,
-} from "@/src/lib/data"
+import { RESPONSABLES_ITHAKA } from "@/src/lib/data"
+import { useI18n, getEstadoProyectoLabel, getTipoApoyoLabel, getPotencialLabel, getEtapaLabel, LOCALE_BY_LANG } from "@/src/lib/i18n"
 import { StatusBadge } from "@/src/components/status-badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/card"
 import { Button } from "@/src/components/ui/button"
@@ -57,6 +54,7 @@ export function ProyectoDetail({ id }: { id: string }) {
     pertenenciaUCU: false,
     notas: "",
   })
+  const { t, lang } = useI18n()
 
   const loadData = useCallback(async () => {
     const [p, a] = await Promise.all([
@@ -82,7 +80,7 @@ export function ProyectoDetail({ id }: { id: string }) {
   if (!proyecto) {
     return (
       <div className="p-6 lg:p-8">
-        <p className="text-muted-foreground">Cargando proyecto...</p>
+        <p className="text-muted-foreground">{t("proyectoDetail.loading")}</p>
       </div>
     )
   }
@@ -133,7 +131,7 @@ export function ProyectoDetail({ id }: { id: string }) {
   }
 
   function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString("es-UY", {
+    return new Date(dateStr).toLocaleDateString(LOCALE_BY_LANG[lang], {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -151,7 +149,7 @@ export function ProyectoDetail({ id }: { id: string }) {
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-3"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Volver a proyectos
+          {t("proyectoDetail.back")}
         </Link>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -160,7 +158,7 @@ export function ProyectoDetail({ id }: { id: string }) {
               <StatusBadge status={proyecto.estado} />
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              {proyecto.id} | Postulacion: {proyecto.postulacionId}
+              {proyecto.id} | {t("proyectoDetail.postulacion")}: {proyecto.postulacionId}
             </p>
           </div>
         </div>
@@ -174,7 +172,7 @@ export function ProyectoDetail({ id }: { id: string }) {
               <User className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Postulante</p>
+              <p className="text-xs text-muted-foreground">{t("proyectoDetail.postulante")}</p>
               <p className="text-sm font-medium">{proyecto.nombrePostulante}</p>
             </div>
           </CardContent>
@@ -185,7 +183,7 @@ export function ProyectoDetail({ id }: { id: string }) {
               <Mail className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Email</p>
+              <p className="text-xs text-muted-foreground">{t("login.email")}</p>
               <p className="text-sm font-medium">{proyecto.email}</p>
             </div>
           </CardContent>
@@ -196,7 +194,7 @@ export function ProyectoDetail({ id }: { id: string }) {
               <Clock className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Creado</p>
+              <p className="text-xs text-muted-foreground">{t("proyectoDetail.creado")}</p>
               <p className="text-sm font-medium">{formatDate(proyecto.creadoEn)}</p>
             </div>
           </CardContent>
@@ -206,7 +204,7 @@ export function ProyectoDetail({ id }: { id: string }) {
       {/* Description */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <p className="text-xs text-muted-foreground mb-1">Descripcion del emprendimiento</p>
+          <p className="text-xs text-muted-foreground mb-1">{t("proyectoDetail.descripcion")}</p>
           <p className="text-sm leading-relaxed">{proyecto.descripcion}</p>
         </CardContent>
       </Card>
@@ -214,15 +212,15 @@ export function ProyectoDetail({ id }: { id: string }) {
       {/* Tabs */}
       <Tabs defaultValue="gestion" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="gestion">Gestion</TabsTrigger>
+          <TabsTrigger value="gestion">{t("proyectoDetail.gestion")}</TabsTrigger>
           <TabsTrigger value="apoyos">
-            Apoyos ({proyecto.apoyos.length})
+            {t("proyectoDetail.apoyos")} ({proyecto.apoyos.length})
           </TabsTrigger>
           <TabsTrigger value="hitos">
-            Hitos ({proyecto.hitos.length})
+            {t("proyectoDetail.hitos")} ({proyecto.hitos.length})
           </TabsTrigger>
-          <TabsTrigger value="evaluacion">Evaluacion</TabsTrigger>
-          <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
+          <TabsTrigger value="evaluacion">{t("proyectoDetail.evaluacion")}</TabsTrigger>
+          <TabsTrigger value="auditoria">{t("proyectoDetail.auditoria")}</TabsTrigger>
         </TabsList>
 
         {/* Tab: Gestion */}
@@ -230,9 +228,9 @@ export function ProyectoDetail({ id }: { id: string }) {
           <div className="grid gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Estado del proyecto</CardTitle>
+                <CardTitle className="text-base">{t("proyectoDetail.estadoTitle")}</CardTitle>
                 <CardDescription>
-                  Cambia el estado del ciclo de vida
+                  {t("proyectoDetail.estadoDesc")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -244,13 +242,11 @@ export function ProyectoDetail({ id }: { id: string }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(ESTADO_PROYECTO_LABELS).map(
-                      ([key, label]) => (
-                        <SelectItem key={key} value={key}>
-                          {label}
-                        </SelectItem>
-                      )
-                    )}
+                    {(["recibida", "en_evaluacion", "proyecto_activo", "incubado", "cerrado"] as const).map((key) => (
+                      <SelectItem key={key} value={key}>
+                        {getEstadoProyectoLabel(lang, key)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </CardContent>
@@ -259,10 +255,10 @@ export function ProyectoDetail({ id }: { id: string }) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">
-                  Responsable Ithaka
+                  {t("proyectoDetail.responsableTitle")}
                 </CardTitle>
                 <CardDescription>
-                  Asigna un responsable del equipo
+                  {t("proyectoDetail.responsableDesc")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -273,10 +269,10 @@ export function ProyectoDetail({ id }: { id: string }) {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar responsable" />
+                    <SelectValue placeholder={t("proyectoDetail.selectResponsable")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="sin_asignar">Sin asignar</SelectItem>
+                    <SelectItem value="sin_asignar">{t("proyectoDetail.sinAsignar")}</SelectItem>
                     {RESPONSABLES_ITHAKA.map((r) => (
                       <SelectItem key={r} value={r}>
                         {r}
@@ -294,11 +290,10 @@ export function ProyectoDetail({ id }: { id: string }) {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                Apoyos y programas
+                {t("proyectoDetail.apoyosTitle")}
               </CardTitle>
               <CardDescription>
-                Un proyecto puede tener multiples apoyos activos
-                simultaneamente
+                {t("proyectoDetail.apoyosDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -309,12 +304,12 @@ export function ProyectoDetail({ id }: { id: string }) {
                   onValueChange={(v) => setNuevoApoyo(v as TipoApoyo)}
                 >
                   <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Tipo de apoyo" />
+                    <SelectValue placeholder={t("proyectoDetail.tipoApoyo")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(TIPO_APOYO_LABELS).map(([key, label]) => (
+                    {(["validalab", "eolo", "mentoria", "tfg", "incubadora_ulises"] as const).map((key) => (
                       <SelectItem key={key} value={key}>
-                        {label}
+                        {getTipoApoyoLabel(lang, key)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -325,14 +320,14 @@ export function ProyectoDetail({ id }: { id: string }) {
                   disabled={!nuevoApoyo}
                 >
                   <Plus className="h-4 w-4 mr-1" />
-                  Agregar apoyo
+                  {t("proyectoDetail.agregarApoyo")}
                 </Button>
               </div>
 
               {/* List */}
               {proyecto.apoyos.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">
-                  Sin apoyos asignados
+                  {t("proyectoDetail.sinApoyos")}
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -343,16 +338,16 @@ export function ProyectoDetail({ id }: { id: string }) {
                     >
                       <div className="flex items-center gap-3">
                         <Badge variant="outline">
-                          {TIPO_APOYO_LABELS[a.tipo]}
+                          {getTipoApoyoLabel(lang, a.tipo)}
                         </Badge>
                         <StatusBadge status={a.estado} />
                         <span className="text-xs text-muted-foreground">
-                          Desde:{" "}
-                          {new Date(a.fechaInicio).toLocaleDateString("es-UY")}
+                          {t("proyectoDetail.desde")}:{" "}
+                          {new Date(a.fechaInicio).toLocaleDateString(LOCALE_BY_LANG[lang])}
                           {a.fechaFin &&
-                            ` - Hasta: ${new Date(
+                            ` - ${t("proyectoDetail.hasta")}: ${new Date(
                               a.fechaFin
-                            ).toLocaleDateString("es-UY")}`}
+                            ).toLocaleDateString(LOCALE_BY_LANG[lang])}`}
                         </span>
                       </div>
                       <Button
@@ -360,7 +355,7 @@ export function ProyectoDetail({ id }: { id: string }) {
                         variant="outline"
                         onClick={() => handleToggleApoyo(a.id)}
                       >
-                        {a.estado === "activo" ? "Finalizar" : "Reactivar"}
+                        {a.estado === "activo" ? t("proyectoDetail.finalizar") : t("proyectoDetail.reactivar")}
                       </Button>
                     </div>
                   ))}
@@ -374,16 +369,16 @@ export function ProyectoDetail({ id }: { id: string }) {
         <TabsContent value="hitos">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Hitos y checklist</CardTitle>
+              <CardTitle className="text-base">{t("proyectoDetail.hitosTitle")}</CardTitle>
               <CardDescription>
-                Seguimiento de hitos del proyecto
+                {t("proyectoDetail.hitosDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {/* Add hito */}
               <div className="flex items-center gap-2 mb-4">
                 <Input
-                  placeholder="Nuevo hito..."
+                  placeholder={t("proyectoDetail.nuevoHito")}
                   value={newHito}
                   onChange={(e) => setNewHito(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAddHito()}
@@ -394,13 +389,13 @@ export function ProyectoDetail({ id }: { id: string }) {
                   disabled={!newHito.trim()}
                 >
                   <Plus className="h-4 w-4 mr-1" />
-                  Agregar
+                  {t("proyectoDetail.agregar")}
                 </Button>
               </div>
 
               {proyecto.hitos.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">
-                  Sin hitos definidos
+                  {t("proyectoDetail.sinHitos")}
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -444,16 +439,16 @@ export function ProyectoDetail({ id }: { id: string }) {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                Evaluacion estructurada
+                {t("proyectoDetail.evaluacionTitle")}
               </CardTitle>
               <CardDescription>
-                Formulario interno de evaluacion del emprendimiento
+                {t("proyectoDetail.evaluacionDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Etapa del emprendimiento</Label>
+                  <Label>{t("proyectoDetail.etapa")}</Label>
                   <Select
                     value={evalForm.etapaEmprendimiento}
                     onValueChange={(v) =>
@@ -464,23 +459,19 @@ export function ProyectoDetail({ id }: { id: string }) {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar etapa" />
+                      <SelectValue placeholder={t("proyectoDetail.seleccionarEtapa")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Ideacion">Ideacion</SelectItem>
-                      <SelectItem value="Validacion">Validacion</SelectItem>
-                      <SelectItem value="Traccion">Traccion</SelectItem>
-                      <SelectItem value="Escalamiento">
-                        Escalamiento
-                      </SelectItem>
-                      <SelectItem value="Consolidacion">
-                        Consolidacion
-                      </SelectItem>
+                      {(["Ideacion", "Validacion", "Traccion", "Escalamiento", "Consolidacion"] as const).map((key) => (
+                        <SelectItem key={key} value={key}>
+                          {getEtapaLabel(lang, key)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Potencial de incubacion</Label>
+                  <Label>{t("proyectoDetail.potencial")}</Label>
                   <Select
                     value={evalForm.potencialIncubacion}
                     onValueChange={(v) =>
@@ -491,12 +482,12 @@ export function ProyectoDetail({ id }: { id: string }) {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar potencial" />
+                      <SelectValue placeholder={t("proyectoDetail.seleccionarPotencial")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="alto">Alto</SelectItem>
-                      <SelectItem value="medio">Medio</SelectItem>
-                      <SelectItem value="bajo">Bajo</SelectItem>
+                      <SelectItem value="alto">{getPotencialLabel(lang, "alto")}</SelectItem>
+                      <SelectItem value="medio">{getPotencialLabel(lang, "medio")}</SelectItem>
+                      <SelectItem value="bajo">{getPotencialLabel(lang, "bajo")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -513,17 +504,17 @@ export function ProyectoDetail({ id }: { id: string }) {
                   }
                 />
                 <Label htmlFor="pertenenciaUCU">
-                  Pertenece a comunidad UCU
+                  {t("proyectoDetail.pertenencia")}
                 </Label>
               </div>
               <div className="mt-4 space-y-2">
-                <Label>Notas de evaluacion</Label>
+                <Label>{t("proyectoDetail.notas")}</Label>
                 <Textarea
                   value={evalForm.notas}
                   onChange={(e) =>
                     setEvalForm((f) => ({ ...f, notas: e.target.value }))
                   }
-                  placeholder="Observaciones sobre el emprendimiento..."
+                  placeholder={t("proyectoDetail.notasPlaceholder")}
                   rows={4}
                 />
               </div>
@@ -536,12 +527,12 @@ export function ProyectoDetail({ id }: { id: string }) {
                 }
               >
                 {proyecto.evaluacion
-                  ? "Actualizar evaluacion"
-                  : "Guardar evaluacion"}
+                  ? t("proyectoDetail.actualizarEval")
+                  : t("proyectoDetail.guardarEval")}
               </Button>
               {proyecto.evaluacion && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  Ultima actualizacion:{" "}
+                  {t("proyectoDetail.ultimaActualizacion")}:{" "}
                   {formatDate(proyecto.evaluacion.actualizadoEn)}
                 </p>
               )}
@@ -554,16 +545,16 @@ export function ProyectoDetail({ id }: { id: string }) {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                Historial de auditoria
+                {t("proyectoDetail.auditoriaTitle")}
               </CardTitle>
               <CardDescription>
-                Registro de cambios realizados en este proyecto
+                {t("proyectoDetail.auditoriaDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {audit.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">
-                  Sin registros de auditoria
+                  {t("proyectoDetail.sinAuditoria")}
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -576,13 +567,13 @@ export function ProyectoDetail({ id }: { id: string }) {
                       <div>
                         <p className="text-sm">
                           <span className="font-medium">{a.accion}</span>
-                          {" — "}
+                          {" - "}
                           <span className="text-muted-foreground">
                             {a.detalle}
                           </span>
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Por {a.usuario} el {formatDate(a.fecha)}
+                          {t("proyectoDetail.por")} {a.usuario} {t("proyectoDetail.el")} {formatDate(a.fecha)}
                         </p>
                       </div>
                     </div>

@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { getProyectos } from "@/src/app/actions"
-import type { Proyecto, EstadoProyecto, TipoPostulante } from "@/src/lib/data"
-import { TIPO_POSTULANTE_LABELS } from "@/src/lib/data"
+import type { Proyecto, TipoPostulante } from "@/src/lib/data"
 import { StatusBadge } from "@/src/components/status-badge"
 import { Card, CardContent } from "@/src/components/ui/card"
 import { Input } from "@/src/components/ui/input"
@@ -25,12 +24,14 @@ import {
 } from "@/src/components/ui/table"
 import { Search, Eye } from "lucide-react"
 import Link from "next/link"
+import { useI18n, getTipoPostulanteLabel, getEstadoProyectoLabel, LOCALE_BY_LANG } from "@/src/lib/i18n"
 
 export function ProyectosList() {
   const [proyectos, setProyectos] = useState<Proyecto[]>([])
   const [search, setSearch] = useState("")
   const [filterEstado, setFilterEstado] = useState<string>("all")
   const [filterTipo, setFilterTipo] = useState<string>("all")
+  const { t, lang } = useI18n()
 
   const loadData = useCallback(async () => {
     const data = await getProyectos()
@@ -52,7 +53,7 @@ export function ProyectosList() {
   })
 
   function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString("es-UY", {
+    return new Date(dateStr).toLocaleDateString(LOCALE_BY_LANG[lang], {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -62,9 +63,9 @@ export function ProyectosList() {
   return (
     <div className="p-6 lg:p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Proyectos</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("proyectos.title")}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Gestion del ciclo de vida de ideas y emprendimientos
+          {t("proyectos.subtitle")}
         </p>
       </div>
 
@@ -75,7 +76,7 @@ export function ProyectosList() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nombre, postulante o ID..."
+                placeholder={t("proyectos.search")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -83,29 +84,29 @@ export function ProyectosList() {
             </div>
             <Select value={filterEstado} onValueChange={setFilterEstado}>
               <SelectTrigger className="w-full sm:w-44">
-                <SelectValue placeholder="Estado" />
+                <SelectValue placeholder={t("postulaciones.estado")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="recibida">Recibida</SelectItem>
-                <SelectItem value="en_evaluacion">En evaluacion</SelectItem>
-                <SelectItem value="proyecto_activo">Proyecto activo</SelectItem>
-                <SelectItem value="incubado">Incubado</SelectItem>
-                <SelectItem value="cerrado">Cerrado</SelectItem>
+                <SelectItem value="all">{t("postulaciones.todosEstados")}</SelectItem>
+                <SelectItem value="recibida">{getEstadoProyectoLabel(lang, "recibida")}</SelectItem>
+                <SelectItem value="en_evaluacion">{getEstadoProyectoLabel(lang, "en_evaluacion")}</SelectItem>
+                <SelectItem value="proyecto_activo">{getEstadoProyectoLabel(lang, "proyecto_activo")}</SelectItem>
+                <SelectItem value="incubado">{getEstadoProyectoLabel(lang, "incubado")}</SelectItem>
+                <SelectItem value="cerrado">{getEstadoProyectoLabel(lang, "cerrado")}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterTipo} onValueChange={setFilterTipo}>
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Tipo postulante" />
+                <SelectValue placeholder={t("postulaciones.tipoPostulante")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los tipos</SelectItem>
-                <SelectItem value="estudiante_ucu">Estudiante UCU</SelectItem>
-                <SelectItem value="alumni">Alumni</SelectItem>
+                <SelectItem value="all">{t("postulaciones.todosTipos")}</SelectItem>
+                <SelectItem value="estudiante_ucu">{getTipoPostulanteLabel(lang, "estudiante_ucu")}</SelectItem>
+                <SelectItem value="alumni">{getTipoPostulanteLabel(lang, "alumni")}</SelectItem>
                 <SelectItem value="docente_funcionario">
-                  Docente/Funcionario UCU
+                  {getTipoPostulanteLabel(lang, "docente_funcionario")}
                 </SelectItem>
-                <SelectItem value="externo">Externo</SelectItem>
+                <SelectItem value="externo">{getTipoPostulanteLabel(lang, "externo")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -118,15 +119,15 @@ export function ProyectosList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Proyecto</TableHead>
-                <TableHead>Postulante</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Responsable</TableHead>
-                <TableHead>Apoyos</TableHead>
-                <TableHead>Actualizado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+                <TableHead>{t("postulaciones.id")}</TableHead>
+                <TableHead>{t("postulaciones.proyecto")}</TableHead>
+                <TableHead>{t("postulaciones.postulante")}</TableHead>
+                <TableHead>{t("postulaciones.tipo")}</TableHead>
+                <TableHead>{t("postulaciones.estado")}</TableHead>
+                <TableHead>{t("proyectos.responsable")}</TableHead>
+                <TableHead>{t("proyectos.apoyos")}</TableHead>
+                <TableHead>{t("proyectos.actualizado")}</TableHead>
+                <TableHead className="text-right">{t("postulaciones.acciones")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -134,7 +135,7 @@ export function ProyectosList() {
                 <TableRow>
                   <TableCell colSpan={9} className="text-center py-8">
                     <p className="text-muted-foreground">
-                      No se encontraron proyectos
+                      {t("proyectos.noResults")}
                     </p>
                   </TableCell>
                 </TableRow>
@@ -152,7 +153,7 @@ export function ProyectosList() {
                     </TableCell>
                     <TableCell>
                       <span className="text-xs">
-                        {TIPO_POSTULANTE_LABELS[p.tipoPostulante as TipoPostulante]}
+                        {getTipoPostulanteLabel(lang, p.tipoPostulante as TipoPostulante)}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -162,7 +163,7 @@ export function ProyectosList() {
                       <span className="text-sm">
                         {p.responsableIthaka || (
                           <span className="text-muted-foreground italic">
-                            Sin asignar
+                            {t("proyectos.sinAsignar")}
                           </span>
                         )}
                       </span>
@@ -170,7 +171,7 @@ export function ProyectosList() {
                     <TableCell>
                       <span className="text-sm">
                         {p.apoyos.length > 0
-                          ? `${p.apoyos.filter((a) => a.estado === "activo").length} activos`
+                          ? `${p.apoyos.filter((a) => a.estado === "activo").length} ${t("proyectos.activos")}`
                           : (
                               <span className="text-muted-foreground">-</span>
                             )}
@@ -183,7 +184,7 @@ export function ProyectosList() {
                       <Link href={`/proyectos/${p.id}`}>
                         <Button size="sm" variant="outline">
                           <Eye className="h-3 w-3 mr-1" />
-                          Ver detalle
+                          {t("proyectos.verDetalle")}
                         </Button>
                       </Link>
                     </TableCell>

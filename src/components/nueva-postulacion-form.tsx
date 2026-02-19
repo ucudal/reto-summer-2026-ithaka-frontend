@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/src/components/ui/select"
 import { MessageSquare, Send, Save } from "lucide-react"
+import { useI18n, getTipoPostulanteLabel } from "@/src/lib/i18n"
 
 type Step = "nombre" | "postulante" | "tipo" | "descripcion" | "confirmar"
 
@@ -23,6 +24,7 @@ const steps: Step[] = ["nombre", "postulante", "tipo", "descripcion", "confirmar
 
 export function NuevaPostulacionForm() {
   const router = useRouter()
+  const { t, lang } = useI18n()
   const [currentStep, setCurrentStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
@@ -74,9 +76,9 @@ export function NuevaPostulacionForm() {
   return (
     <div className="p-6 lg:p-8 max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">Nueva Postulacion</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("nuevaPostulacion.title")}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Simula el ingreso de una postulacion desde el chatbot
+          {t("nuevaPostulacion.subtitle")}
         </p>
       </div>
 
@@ -100,8 +102,8 @@ export function NuevaPostulacionForm() {
               <MessageSquare className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
-              <CardTitle className="text-base">Chatbot Ithaka</CardTitle>
-              <CardDescription>Paso {currentStep + 1} de {steps.length}</CardDescription>
+              <CardTitle className="text-base">{t("nuevaPostulacion.chatbot")}</CardTitle>
+              <CardDescription>{t("nuevaPostulacion.paso")} {currentStep + 1} {t("nuevaPostulacion.de")} {steps.length}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -109,13 +111,13 @@ export function NuevaPostulacionForm() {
           {step === "nombre" && (
             <div className="space-y-4">
               <div className="rounded-lg bg-muted p-3 text-sm max-w-[80%]">
-                Hola, bienvenido a Ithaka. Contame, cual es el nombre de tu proyecto o idea?
+                {t("nuevaPostulacion.nombrePrompt")}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="nombreProyecto">Nombre del proyecto</Label>
+                <Label htmlFor="nombreProyecto">{t("nuevaPostulacion.nombreLabel")}</Label>
                 <Input
                   id="nombreProyecto"
-                  placeholder="Ej: EcoTrack, MindfulU..."
+                  placeholder={t("nuevaPostulacion.nombrePlaceholder")}
                   value={form.nombreProyecto}
                   onChange={(e) => update("nombreProyecto", e.target.value)}
                 />
@@ -126,23 +128,23 @@ export function NuevaPostulacionForm() {
           {step === "postulante" && (
             <div className="space-y-4">
               <div className="rounded-lg bg-muted p-3 text-sm max-w-[80%]">
-                Excelente! Ahora necesito tus datos de contacto.
+                {t("nuevaPostulacion.postulantePrompt")}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="nombrePostulante">Nombre completo</Label>
+                <Label htmlFor="nombrePostulante">{t("nuevaPostulacion.postulanteLabel")}</Label>
                 <Input
                   id="nombrePostulante"
-                  placeholder="Tu nombre completo"
+                  placeholder={t("nuevaPostulacion.postulantePlaceholder")}
                   value={form.nombrePostulante}
                   onChange={(e) => update("nombrePostulante", e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("login.email")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="tu@email.com"
+                  placeholder={t("nuevaPostulacion.emailPlaceholder")}
                   value={form.email}
                   onChange={(e) => update("email", e.target.value)}
                 />
@@ -153,24 +155,24 @@ export function NuevaPostulacionForm() {
           {step === "tipo" && (
             <div className="space-y-4">
               <div className="rounded-lg bg-muted p-3 text-sm max-w-[80%]">
-                Perfecto. Cual es tu vinculo con la UCU?
+                {t("nuevaPostulacion.tipoPrompt")}
               </div>
               <div className="space-y-2">
-                <Label>Tipo de postulante</Label>
+                <Label>{t("nuevaPostulacion.tipoLabel")}</Label>
                 <Select
                   value={form.tipoPostulante}
                   onValueChange={(v) => update("tipoPostulante", v)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona tu vinculo" />
+                    <SelectValue placeholder={t("nuevaPostulacion.tipoPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="estudiante_ucu">Estudiante UCU</SelectItem>
-                    <SelectItem value="alumni">Alumni</SelectItem>
+                    <SelectItem value="estudiante_ucu">{getTipoPostulanteLabel(lang, "estudiante_ucu")}</SelectItem>
+                    <SelectItem value="alumni">{getTipoPostulanteLabel(lang, "alumni")}</SelectItem>
                     <SelectItem value="docente_funcionario">
-                      Docente/Funcionario UCU
+                      {getTipoPostulanteLabel(lang, "docente_funcionario")}
                     </SelectItem>
-                    <SelectItem value="externo">Externo</SelectItem>
+                    <SelectItem value="externo">{getTipoPostulanteLabel(lang, "externo")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -180,14 +182,13 @@ export function NuevaPostulacionForm() {
           {step === "descripcion" && (
             <div className="space-y-4">
               <div className="rounded-lg bg-muted p-3 text-sm max-w-[80%]">
-                Genial! Ahora contame brevemente de que se trata tu idea o
-                emprendimiento.
+                {t("nuevaPostulacion.descripcionPrompt")}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="descripcion">Descripcion de la idea</Label>
+                <Label htmlFor="descripcion">{t("nuevaPostulacion.descripcionLabel")}</Label>
                 <Textarea
                   id="descripcion"
-                  placeholder="Describe tu idea en unas lineas..."
+                  placeholder={t("nuevaPostulacion.descripcionPlaceholder")}
                   value={form.descripcion}
                   onChange={(e) => update("descripcion", e.target.value)}
                   rows={4}
@@ -199,34 +200,36 @@ export function NuevaPostulacionForm() {
           {step === "confirmar" && (
             <div className="space-y-4">
               <div className="rounded-lg bg-muted p-3 text-sm max-w-[80%]">
-                Perfecto! Revisa los datos antes de enviar tu postulacion.
+                {t("nuevaPostulacion.confirmarPrompt")}
               </div>
               <div className="rounded-lg border p-4 space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Proyecto:</span>
+                  <span className="text-muted-foreground">{t("nuevaPostulacion.confirmarProyecto")}:</span>
                   <span className="font-medium">{form.nombreProyecto}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Postulante:</span>
+                  <span className="text-muted-foreground">{t("nuevaPostulacion.confirmarPostulante")}:</span>
                   <span className="font-medium">{form.nombrePostulante}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Email:</span>
+                  <span className="text-muted-foreground">{t("nuevaPostulacion.confirmarEmail")}:</span>
                   <span className="font-medium">{form.email}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Vinculo UCU:</span>
-                  <span className="font-medium">{form.tipoPostulante}</span>
+                  <span className="text-muted-foreground">{t("nuevaPostulacion.confirmarVinculo")}:</span>
+                  <span className="font-medium">
+                    {form.tipoPostulante
+                      ? getTipoPostulanteLabel(lang, form.tipoPostulante as any)
+                      : "-"}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Descripcion:</span>
+                  <span className="text-muted-foreground">{t("nuevaPostulacion.confirmarDescripcion")}:</span>
                   <p className="mt-1">{form.descripcion}</p>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Al enviar, aceptas que tus datos seran utilizados para la
-                evaluacion de tu postulacion y contacto por parte del equipo
-                Ithaka.
+                {t("nuevaPostulacion.confirmarAviso")}
               </p>
             </div>
           )}
@@ -238,7 +241,7 @@ export function NuevaPostulacionForm() {
               onClick={() => setCurrentStep((s) => Math.max(0, s - 1))}
               disabled={currentStep === 0}
             >
-              Anterior
+              {t("nuevaPostulacion.anterior")}
             </Button>
             <div className="flex items-center gap-2">
               {step === "confirmar" ? (
@@ -249,11 +252,11 @@ export function NuevaPostulacionForm() {
                     disabled={loading}
                   >
                     <Save className="h-4 w-4 mr-1" />
-                    Guardar borrador
+                    {t("nuevaPostulacion.guardarBorrador")}
                   </Button>
                   <Button onClick={() => handleSubmit(false)} disabled={loading}>
                     <Send className="h-4 w-4 mr-1" />
-                    {loading ? "Enviando..." : "Enviar postulacion"}
+                    {loading ? t("nuevaPostulacion.enviando") : t("nuevaPostulacion.enviarPostulacion")}
                   </Button>
                 </>
               ) : (
@@ -261,7 +264,7 @@ export function NuevaPostulacionForm() {
                   onClick={() => setCurrentStep((s) => Math.min(steps.length - 1, s + 1))}
                   disabled={!canAdvance()}
                 >
-                  Siguiente
+                  {t("nuevaPostulacion.siguiente")}
                 </Button>
               )}
             </div>

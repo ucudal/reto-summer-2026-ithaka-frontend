@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { getPostulaciones, convertirAProyecto } from "@/src/app/actions"
-import type { Postulacion, TipoPostulante, EstadoPostulacion } from "@/src/lib/data"
-import { TIPO_POSTULANTE_LABELS } from "@/src/lib/data"
+import type { Postulacion, TipoPostulante } from "@/src/lib/data"
 import { StatusBadge } from "@/src/components/status-badge"
 import { Card, CardContent } from "@/src/components/ui/card"
 import { Input } from "@/src/components/ui/input"
@@ -34,6 +33,7 @@ import {
 import { Search, ArrowUpRight, Plus } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useI18n, getTipoPostulanteLabel, getEstadoPostulacionLabel, LOCALE_BY_LANG } from "@/src/lib/i18n"
 
 export function PostulacionesList() {
   const [postulaciones, setPostulaciones] = useState<Postulacion[]>([])
@@ -43,6 +43,7 @@ export function PostulacionesList() {
   const [convertDialog, setConvertDialog] = useState<Postulacion | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { t, lang } = useI18n()
 
   const loadData = useCallback(async () => {
     const data = await getPostulaciones()
@@ -75,7 +76,7 @@ export function PostulacionesList() {
   }
 
   function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString("es-UY", {
+    return new Date(dateStr).toLocaleDateString(LOCALE_BY_LANG[lang], {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -86,15 +87,15 @@ export function PostulacionesList() {
     <div className="p-6 lg:p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Postulaciones</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t("postulaciones.title")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Bandeja de entrada de postulaciones desde el chatbot
+            {t("postulaciones.subtitle")}
           </p>
         </div>
         <Link href="/nueva-postulacion">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Nueva postulacion
+            {t("postulaciones.nueva")}
           </Button>
         </Link>
       </div>
@@ -106,7 +107,7 @@ export function PostulacionesList() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nombre, postulante o email..."
+                placeholder={t("postulaciones.search")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -114,26 +115,26 @@ export function PostulacionesList() {
             </div>
             <Select value={filterEstado} onValueChange={setFilterEstado}>
               <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Estado" />
+                <SelectValue placeholder={t("postulaciones.estado")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="borrador">Borrador</SelectItem>
-                <SelectItem value="recibida">Recibida</SelectItem>
+                <SelectItem value="all">{t("postulaciones.todosEstados")}</SelectItem>
+                <SelectItem value="borrador">{getEstadoPostulacionLabel(lang, "borrador")}</SelectItem>
+                <SelectItem value="recibida">{getEstadoPostulacionLabel(lang, "recibida")}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterTipo} onValueChange={setFilterTipo}>
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Tipo postulante" />
+                <SelectValue placeholder={t("postulaciones.tipoPostulante")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los tipos</SelectItem>
-                <SelectItem value="estudiante_ucu">Estudiante UCU</SelectItem>
-                <SelectItem value="alumni">Alumni</SelectItem>
+                <SelectItem value="all">{t("postulaciones.todosTipos")}</SelectItem>
+                <SelectItem value="estudiante_ucu">{getTipoPostulanteLabel(lang, "estudiante_ucu")}</SelectItem>
+                <SelectItem value="alumni">{getTipoPostulanteLabel(lang, "alumni")}</SelectItem>
                 <SelectItem value="docente_funcionario">
-                  Docente/Funcionario UCU
+                  {getTipoPostulanteLabel(lang, "docente_funcionario")}
                 </SelectItem>
-                <SelectItem value="externo">Externo</SelectItem>
+                <SelectItem value="externo">{getTipoPostulanteLabel(lang, "externo")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -146,13 +147,13 @@ export function PostulacionesList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Proyecto</TableHead>
-                <TableHead>Postulante</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Fecha</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+                <TableHead>{t("postulaciones.id")}</TableHead>
+                <TableHead>{t("postulaciones.proyecto")}</TableHead>
+                <TableHead>{t("postulaciones.postulante")}</TableHead>
+                <TableHead>{t("postulaciones.tipo")}</TableHead>
+                <TableHead>{t("postulaciones.estado")}</TableHead>
+                <TableHead>{t("postulaciones.fecha")}</TableHead>
+                <TableHead className="text-right">{t("postulaciones.acciones")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -160,7 +161,7 @@ export function PostulacionesList() {
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
                     <p className="text-muted-foreground">
-                      No se encontraron postulaciones
+                      {t("postulaciones.noResults")}
                     </p>
                   </TableCell>
                 </TableRow>
@@ -182,7 +183,7 @@ export function PostulacionesList() {
                     </TableCell>
                     <TableCell>
                       <span className="text-xs">
-                        {TIPO_POSTULANTE_LABELS[p.tipoPostulante as TipoPostulante]}
+                        {getTipoPostulanteLabel(lang, p.tipoPostulante as TipoPostulante)}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -200,7 +201,7 @@ export function PostulacionesList() {
                             onClick={() => setConvertDialog(p)}
                           >
                             <ArrowUpRight className="h-3 w-3 mr-1" />
-                            Crear proyecto
+                            {t("postulaciones.crearProyecto")}
                           </Button>
                         )}
                       </div>
@@ -220,20 +221,19 @@ export function PostulacionesList() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Convertir a proyecto</DialogTitle>
+            <DialogTitle>{t("postulaciones.convertirTitulo")}</DialogTitle>
             <DialogDescription>
-              Se creara un nuevo proyecto a partir de la postulacion{" "}
-              <strong>{convertDialog?.nombreProyecto}</strong> de{" "}
-              <strong>{convertDialog?.nombrePostulante}</strong>. Esta accion
-              registrara el cambio en el historial de auditoria.
+              {t("postulaciones.convertirTexto")}{" "}
+              <strong>{convertDialog?.nombreProyecto}</strong> {t("common.of")}{" "}
+              <strong>{convertDialog?.nombrePostulante}</strong>. {t("postulaciones.convertirTexto2")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConvertDialog(null)}>
-              Cancelar
+              {t("common.cancelar")}
             </Button>
             <Button onClick={handleConvert} disabled={loading}>
-              {loading ? "Creando..." : "Confirmar"}
+              {loading ? t("common.creando") : t("common.confirmar")}
             </Button>
           </DialogFooter>
         </DialogContent>
