@@ -3,6 +3,8 @@
 import { Provider } from "react-redux";
 import { store } from ".";
 import RoleProvider from "../components/role-context";
+import SettingsProvider from "@/src/components/settings-context";
+import { ThemeProvider } from "@/src/components/theme-provider";
 
 interface Props {
   children: React.ReactNode;
@@ -11,7 +13,11 @@ interface Props {
 export const Providers = ({ children }: Props) => {
   return (
     <Provider store={store}>
-      <RoleProvider>{children}</RoleProvider>
+      <ThemeProvider attribute="class" defaultTheme="light">
+        <SettingsProvider>
+          <RoleProvider>{children}</RoleProvider>
+        </SettingsProvider>
+      </ThemeProvider>
     </Provider>
   );
 };

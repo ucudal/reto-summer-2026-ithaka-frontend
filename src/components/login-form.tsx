@@ -15,12 +15,14 @@ import { Label } from "@/src/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { useI18n } from "@/src/lib/i18n";
 
 const roles = ["admin", "coordinador", "tutor", "operador"];
 
 export function LoginForm() {
   const router = useRouter();
   const { setRole } = useRole();
+  const { t } = useI18n();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -49,7 +51,7 @@ export function LoginForm() {
       const user = validUsers[form.email];
       
       if (!user || user.password !== form.password) {
-        alert("Email o contraseña inválidos");
+        alert(t("login.errorInvalid"));
         setLoading(false);
         return;
       }
@@ -61,7 +63,7 @@ export function LoginForm() {
       router.push("/");
     } catch (error) {   
       console.error("Login error:", error);
-      alert("Error al intentar loguearse");
+      alert(t("login.errorGeneric"));
     } finally {
       setLoading(false);
     }
@@ -72,29 +74,29 @@ export function LoginForm() {
       <div className="w-full max-w-md p-4">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-foreground">
-            Welcome to Ithaka's Backoffice
+            {t("login.welcome")}
           </h1>
           <p className="text-sm text-muted-foreground mt-2">
-            Sign in to your account
+            {t("login.subtitle")}
           </p>
         </div>
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Sign In</CardTitle>
+            <CardTitle>{t("login.signIn")}</CardTitle>
             <CardDescription>
-              Enter your credentials to access the system
+              {t("login.description")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-6">
               {/* Email Field */}
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("login.email")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={t("login.emailPlaceholder")}
                   value={form.email}
                   onChange={(e) => update("email", e.target.value)}
                   required
@@ -103,12 +105,12 @@ export function LoginForm() {
 
               {/* Password Field */}
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("login.password")}</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder={t("login.passwordPlaceholder")}
                     value={form.password}
                     onChange={(e) => update("password", e.target.value)}
                     required
@@ -138,7 +140,7 @@ export function LoginForm() {
                     }
                   />
                   <Label htmlFor="remember" className="cursor-pointer">
-                    Remember me
+                    {t("login.remember")}
                   </Label>
                 </div>
               </div>
@@ -149,7 +151,7 @@ export function LoginForm() {
                 disabled={loading || !form.email || !form.password}
                 className="w-full h-10 text-base font-semibold"
               >
-                {loading ? "Signing in..." : "Sign In"}
+                {loading ? t("login.signing") : t("login.signIn")}
               </Button>
             </form>
           </CardContent>

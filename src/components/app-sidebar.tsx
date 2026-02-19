@@ -13,20 +13,24 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useState } from "react";
 import { useRole } from "@/src/components/role-context";
 import { useAuthStore } from "@/src/hooks/useAuthStore";
+import { useSettings } from "@/src/components/settings-context";
+import { useI18n } from "@/src/lib/i18n";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/postulaciones", label: "Postulaciones", icon: Inbox },
-  { href: "/proyectos", label: "Proyectos", icon: FolderKanban },
-  { href: "/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
+  { href: "/", label: "nav.dashboard", icon: LayoutDashboard },
+  { href: "/postulaciones", label: "nav.postulaciones", icon: Inbox },
+  { href: "/proyectos", label: "nav.proyectos", icon: FolderKanban },
+  { href: "/evaluaciones", label: "nav.evaluaciones", icon: ClipboardCheck },
+  { href: "/nueva-postulacion", label: "nav.nuevaPostulacion", icon: FileText },
   {
     href: "/gestion-usuarios",
-    label: "Gestion de Usuarios",
+    label: "nav.gestionUsuarios",
     icon: Users,
     adminOnly: true,
   },
@@ -38,12 +42,32 @@ export function AppSidebar() {
   const { role } = useRole();
   const { startLogout } = useAuthStore();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const { openSettings, settings, setSettings } = useSettings();
+  const isCompact = collapsed || settings.compactSidebar;
+  const { t } = useI18n();
+  const roleLabel =
+    role === "admin"
+      ? t("role.adminLabel")
+      : role === "coordinador"
+        ? t("role.coordinadorLabel")
+        : role === "operador"
+          ? t("role.operadorLabel")
+          : role === "tutor"
+            ? t("role.tutorLabel")
+            : "";
+  const handleToggle = () => {
+    if (settings.compactSidebar) {
+      setSettings({ compactSidebar: false });
+    } else {
+      setCollapsed(!collapsed);
+    }
+  };
 
   return (
     <aside
       className={cn(
         "relative flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200",
-        collapsed ? "w-16" : "w-64",
+        isCompact ? "w-16" : "w-64",
       )}
     >
       {/* Logo area */}
@@ -51,13 +75,13 @@ export function AppSidebar() {
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
           I
         </div>
-        {!collapsed && (
+        {!isCompact && (
           <div className="flex flex-col">
             <span className="text-sm font-semibold text-sidebar-accent-foreground">
-              Ithaka
+              {t("app.title")}
             </span>
             <span className="text-xs text-sidebar-foreground/60">
-              Backoffice
+              {t("app.subtitle")}
             </span>
           </div>
         )}
@@ -97,7 +121,7 @@ export function AppSidebar() {
                     )}
                   >
                     <item.icon className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span>{item.label}</span>}
+                    {!isCompact && <span>{t(item.label)}</span>}
                   </Link>
                 </li>
               );
@@ -109,24 +133,37 @@ export function AppSidebar() {
       {/* Collapse toggle */}
       <div className="border-t border-sidebar-border px-3 py-3">
         <div className="flex items-center justify-between">
-          {!collapsed && (
+          {!isCompact && (
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-medium">Juan</span>
-              <span className="text-xs text-sidebar-foreground/60">{role}</span>
+              <span className="text-xs text-sidebar-foreground/60">{roleLabel || role}</span>
             </div>
           )}
 
-          <button type="button"
-            onClick={() => setShowLogoutConfirm(true)}
-            className="p-2 rounded-lg hover:bg-sidebar-accent transition"
-          >
-            <Image src={Logout} alt="Logout" width={20} height={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={openSettings}
+              className="p-2 rounded-lg hover:bg-sidebar-accent transition"
+              title={t("settings.titleButton")}
+            >
+              <SettingsIcon className="h-5 w-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowLogoutConfirm(true)}
+              className="p-2 rounded-lg hover:bg-sidebar-accent transition"
+              title={t("nav.logout")}
+            >
+              <Image src={Logout} alt="Logout" width={20} height={20} />
+            </button>
+          </div>
         </div>
       </div>
 
       {(role === "admin" || role === "coordinador") && <button
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={handleToggle}
         className="
             absolute
             bottom-1/3
@@ -140,9 +177,9 @@ export function AppSidebar() {
             p-2
             shadow-md
           "
-        aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+        aria-label={isCompact ? t("sidebar.expand") : t("sidebar.collapse")}
       >
-        {collapsed ? (
+        {isCompact ? (
           <ChevronRight className="h-4 w-4" />
         ) : (
           <ChevronLeft className="h-4 w-4" />
@@ -150,7 +187,7 @@ export function AppSidebar() {
       </button>}
 
       {role === "tutor" && <button
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={handleToggle}
         className="
             absolute
             top-1/3
@@ -164,9 +201,9 @@ export function AppSidebar() {
             p-2
             shadow-md
           "
-        aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+        aria-label={isCompact ? t("sidebar.expand") : t("sidebar.collapse")}
       >
-        {collapsed ? (
+        {isCompact ? (
           <ChevronRight className="h-4 w-4" />
         ) : (
           <ChevronLeft className="h-4 w-4" />
@@ -178,10 +215,10 @@ export function AppSidebar() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              Confirmar cierre de sesión
+              {t("logout.title")}
             </h2>
             <p className="text-gray-600 text-sm mb-6">
-              ¿Está seguro de que desea cerrar sesión?
+              {t("logout.message")}
             </p>
 
             <div className="flex gap-3 justify-end">
@@ -189,13 +226,13 @@ export function AppSidebar() {
                 onClick={() => setShowLogoutConfirm(false)}
                 className="px-4 py-2 rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 transition text-sm font-medium"
               >
-                Cancelar
+                {t("logout.cancel")}
               </button>
               <button
                 onClick={() => { startLogout(); setShowLogoutConfirm(false); }}
                 className="px-4 py-2 rounded-md text-white bg-red-600 hover:bg-red-700 transition text-sm font-medium"
               >
-                Cerrar sesión
+                {t("logout.confirm")}
               </button>
             </div>
           </div>

@@ -18,10 +18,7 @@ import {
   Cell,
   Legend,
 } from "recharts"
-import {
-  ESTADO_PROYECTO_LABELS,
-  TIPO_APOYO_LABELS,
-} from "@/src/lib/data"
+import { useI18n, getEstadoProyectoLabel, getTipoApoyoLabel } from "@/src/lib/i18n"
 import {
   FileText,
   FolderKanban,
@@ -45,6 +42,7 @@ const CHART_COLORS = [
 
 export function DashboardContent() {
   const [metrics, setMetrics] = useState<Metrics | null>(null)
+  const { t, lang } = useI18n()
 
   useEffect(() => {
     getMetrics().then(setMetrics)
@@ -53,21 +51,21 @@ export function DashboardContent() {
   if (!metrics) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-muted-foreground">Cargando metricas...</div>
+        <div className="text-muted-foreground">{t("dashboard.loading")}</div>
       </div>
     )
   }
 
   const estadoData = Object.entries(metrics.distribucionEstado).map(
     ([key, value]) => ({
-      name: ESTADO_PROYECTO_LABELS[key as keyof typeof ESTADO_PROYECTO_LABELS] || key,
+      name: getEstadoProyectoLabel(lang, key as any) || key,
       value,
     })
   )
 
   const apoyoData = Object.entries(metrics.distribucionApoyo).map(
     ([key, value]) => ({
-      name: TIPO_APOYO_LABELS[key as keyof typeof TIPO_APOYO_LABELS] || key,
+      name: getTipoApoyoLabel(lang, key as any) || key,
       value,
     })
   )
@@ -75,9 +73,9 @@ export function DashboardContent() {
   return (
     <div className="p-6 lg:p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("nav.dashboard")}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Vision general del ecosistema Ithaka
+          {t("dashboard.subtitle")}
         </p>
       </div>
 
@@ -85,27 +83,27 @@ export function DashboardContent() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-8">
         <KPICard
           icon={FileText}
-          label="Total Postulaciones"
+          label={t("dashboard.totalPostulaciones")}
           value={metrics.totalPostulaciones}
           color="text-primary"
         />
         <KPICard
           icon={FolderKanban}
-          label="Proyectos Activos"
+          label={t("dashboard.proyectosActivos")}
           value={metrics.proyectosActivos}
           color="text-success"
         />
         <KPICard
           icon={Rocket}
-          label="Proyectos Incubados"
+          label={t("dashboard.proyectosIncubados")}
           value={metrics.incubados}
           color="text-chart-4"
         />
         <KPICard
           icon={Users}
-          label="Comunidad UCU"
+          label={t("dashboard.comunidadUcu")}
           value={`${metrics.porcentajeUCU}%`}
-          subtitle={`${metrics.comunidadUCU} de ${metrics.totalPostulaciones}`}
+          subtitle={`${metrics.comunidadUCU} ${t("common.of")} ${metrics.totalPostulaciones}`}
           color="text-warning"
         />
       </div>
@@ -114,25 +112,25 @@ export function DashboardContent() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-8">
         <KPICard
           icon={GraduationCap}
-          label="Estudiantes UCU"
+          label={t("dashboard.estudiantesUcu")}
           value={metrics.estudiantesUCU}
           color="text-primary"
         />
         <KPICard
           icon={Award}
-          label="Alumni"
+          label={t("dashboard.alumni")}
           value={metrics.alumni}
           color="text-success"
         />
         <KPICard
           icon={TrendingUp}
-          label="Postulacion a Proyecto"
+          label={t("dashboard.postulacionProyecto")}
           value={`${metrics.conversionPostulacionProyecto}%`}
           color="text-warning"
         />
         <KPICard
           icon={ArrowRight}
-          label="Proyecto a Incubacion"
+          label={t("dashboard.proyectoIncubacion")}
           value={`${metrics.conversionProyectoIncubacion}%`}
           color="text-chart-4"
         />
@@ -142,7 +140,7 @@ export function DashboardContent() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Proyectos por estado</CardTitle>
+            <CardTitle className="text-base">{t("dashboard.proyectosPorEstado")}</CardTitle>
           </CardHeader>
           <CardContent>
             {estadoData.length > 0 ? (
@@ -174,7 +172,7 @@ export function DashboardContent() {
               </ResponsiveContainer>
             ) : (
               <p className="text-sm text-muted-foreground text-center py-8">
-                Sin datos disponibles
+                {t("dashboard.noData")}
               </p>
             )}
           </CardContent>
@@ -183,7 +181,7 @@ export function DashboardContent() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              Distribucion de apoyos
+              {t("dashboard.distribucionApoyos")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -199,7 +197,7 @@ export function DashboardContent() {
               </ResponsiveContainer>
             ) : (
               <p className="text-sm text-muted-foreground text-center py-8">
-                Sin datos disponibles
+                {t("dashboard.noData")}
               </p>
             )}
           </CardContent>
