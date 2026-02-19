@@ -26,9 +26,26 @@ export type TipoApoyo =
 
 export type EstadoApoyo = "activo" | "finalizado"
 
-export type Rol = "admin" | "coordinador" | "operador" | "tutor"
+export type Rol = "admin" | "tutor" | "coordinador" | "operador"
+
+export type EstadoUsuario = "activo" | "inactivo"
+
+export type TipoComunidad = "docente_funcionario" | "alumni" | "estudiante" | "externo"
 
 // --------------- Entities ---------------
+
+export interface Usuario {
+  id: string
+  nombre: string
+  email: string
+  rol: Rol
+  comunidad: TipoComunidad
+  estado: EstadoUsuario
+  fotoPerfil: string
+  ultimoAcceso: string
+  creadoEn: string
+  actualizadoEn: string
+}
 
 export interface Postulacion {
   id: string
@@ -131,6 +148,25 @@ export const ESTADO_APOYO_LABELS: Record<EstadoApoyo, string> = {
   finalizado: "Finalizado",
 }
 
+export const ROL_LABELS: Record<Rol, string> = {
+  admin: "Administrador",
+  tutor: "Tutor",
+  coordinador: "Coordinador",
+  operador: "Operador",
+}
+
+export const ESTADO_USUARIO_LABELS: Record<EstadoUsuario, string> = {
+  activo: "Activo",
+  inactivo: "Inactivo",
+}
+
+export const COMUNIDAD_LABELS: Record<TipoComunidad, string> = {
+  docente_funcionario: "Docente/Funcionario UCU",
+  alumni: "Alumni",
+  estudiante: "Estudiante",
+  externo: "Externo",
+}
+
 export const RESPONSABLES_ITHAKA = [
   "Ana Garcia",
   "Carlos Rodriguez",
@@ -153,6 +189,93 @@ function daysAgo(n: number) {
   d.setDate(d.getDate() - n)
   return d.toISOString()
 }
+
+const seedUsuarios: Usuario[] = [
+  {
+    id: "USR-0001",
+    nombre: "Ana García",
+    email: "ana.garcia@ucu.edu.uy",
+    rol: "admin",
+    comunidad: "docente_funcionario",
+    estado: "activo",
+    fotoPerfil: "https://ui-avatars.com/api/?name=Ana+García&background=354558&color=fff&bold=true",
+    ultimoAcceso: daysAgo(0),
+    creadoEn: daysAgo(60),
+    actualizadoEn: daysAgo(5),
+  },
+  {
+    id: "USR-0002",
+    nombre: "Carlos Rodríguez",
+    email: "carlos.rodriguez@ucu.edu.uy",
+    rol: "coordinador",
+    comunidad: "docente_funcionario",
+    estado: "activo",
+    fotoPerfil: "https://ui-avatars.com/api/?name=Carlos+Rodríguez&background=354558&color=fff&bold=true",
+    ultimoAcceso: daysAgo(1),
+    creadoEn: daysAgo(50),
+    actualizadoEn: daysAgo(2),
+  },
+  {
+    id: "USR-0003",
+    nombre: "María López",
+    email: "maria.lopez@ucu.edu.uy",
+    rol: "coordinador",
+    comunidad: "docente_funcionario",
+    estado: "activo",
+    fotoPerfil: "https://ui-avatars.com/api/?name=María+López&background=354558&color=fff&bold=true",
+    ultimoAcceso: daysAgo(2),
+    creadoEn: daysAgo(45),
+    actualizadoEn: daysAgo(3),
+  },
+  {
+    id: "USR-0004",
+    nombre: "Juan Martínez",
+    email: "juan.martinez@ucu.edu.uy",
+    rol: "tutor",
+    comunidad: "alumni",
+    estado: "activo",
+    fotoPerfil: "https://ui-avatars.com/api/?name=Juan+Martínez&background=354558&color=fff&bold=true",
+    ultimoAcceso: daysAgo(3),
+    creadoEn: daysAgo(30),
+    actualizadoEn: daysAgo(1),
+  },
+  {
+    id: "USR-0005",
+    nombre: "Laura Fernández",
+    email: "laura.fernandez@ucu.edu.uy",
+    rol: "tutor",
+    comunidad: "docente_funcionario",
+    estado: "activo",
+    fotoPerfil: "https://ui-avatars.com/api/?name=Laura+Fernández&background=354558&color=fff&bold=true",
+    ultimoAcceso: daysAgo(4),
+    creadoEn: daysAgo(25),
+    actualizadoEn: daysAgo(8),
+  },
+  {
+    id: "USR-0006",
+    nombre: "Roberto Silva",
+    email: "roberto.silva@ucu.edu.uy",
+    rol: "tutor",
+    comunidad: "alumni",
+    estado: "activo",
+    fotoPerfil: "https://ui-avatars.com/api/?name=Roberto+Silva&background=354558&color=fff&bold=true",
+    ultimoAcceso: daysAgo(5),
+    creadoEn: daysAgo(15),
+    actualizadoEn: daysAgo(10),
+  },
+  {
+    id: "USR-0007",
+    nombre: "Patricia Gómez",
+    email: "patricia.gomez@ucu.edu.uy",
+    rol: "coordinador",
+    comunidad: "docente_funcionario",
+    estado: "inactivo",
+    fotoPerfil: "https://ui-avatars.com/api/?name=Patricia+Gómez&background=354558&color=fff&bold=true",
+    ultimoAcceso: daysAgo(30),
+    creadoEn: daysAgo(20),
+    actualizadoEn: daysAgo(7),
+  },
+]
 
 const seedPostulaciones: Postulacion[] = [
   {
@@ -468,6 +591,44 @@ class IthakaStore {
   postulaciones: Postulacion[] = [...seedPostulaciones]
   proyectos: Proyecto[] = [...seedProyectos]
   auditLog: AuditEntry[] = [...seedAuditLog]
+  usuarios: Usuario[] = [...seedUsuarios]
+
+  // --- Usuarios ---
+  getUsuarios() {
+    return this.usuarios
+  }
+  getUsuario(id: string) {
+    return this.usuarios.find((u) => u.id === id)
+  }
+  addUsuario(data: Omit<Usuario, "id" | "creadoEn" | "actualizadoEn">) {
+    const now = new Date().toISOString()
+    const u: Usuario = { ...data, id: genId(), creadoEn: now, actualizadoEn: now }
+    this.usuarios.unshift(u)
+    return u
+  }
+  updateUsuario(id: string, data: Partial<Omit<Usuario, "id" | "creadoEn">>) {
+    const u = this.getUsuario(id)
+    if (u) {
+      Object.assign(u, data, { actualizadoEn: new Date().toISOString() })
+    }
+    return u
+  }
+  toggleUsuarioEstado(id: string) {
+    const u = this.getUsuario(id)
+    if (u) {
+      u.estado = u.estado === "activo" ? "inactivo" : "activo"
+      u.actualizadoEn = new Date().toISOString()
+    }
+    return u
+  }
+  deleteUsuario(id: string) {
+    const index = this.usuarios.findIndex((u) => u.id === id)
+    if (index > -1) {
+      this.usuarios.splice(index, 1)
+      return true
+    }
+    return false
+  }
 
   // --- Postulaciones ---
   getPostulaciones() {
