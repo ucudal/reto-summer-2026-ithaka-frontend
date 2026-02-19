@@ -59,32 +59,6 @@ Obtiene una postulación específica.
 
 ---
 
-### POST `/api/postulaciones`
-Crea una nueva postulación.
-
-**Body:**
-```json
-{
-  "nombreProyecto": "NuevoProyecto",
-  "nombrePostulante": "Juan Perez",
-  "email": "juan@example.com",
-  "tipoPostulante": "estudiante_ucu",
-  "descripcion": "Descripción del proyecto",
-  "estado": "recibida"
-}
-```
-
-**Response (201):**
-```json
-{
-  "id": "POST-0005",
-  "nombreProyecto": "NuevoProyecto",
-  ...
-}
-```
-
----
-
 ### PATCH `/api/postulaciones/{id}/estado`
 Actualiza el estado de una postulación.
 
