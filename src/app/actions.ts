@@ -25,6 +25,7 @@ export async function createPostulacion(formData: FormData) {
     email: formData.get("email") as string,
     tipoPostulante: formData.get("tipoPostulante") as TipoPostulante,
     descripcion: formData.get("descripcion") as string,
+    notas: "",
     estado: (formData.get("estado") as EstadoPostulacion) || "recibida",
   }
   return store.addPostulacion(data)
@@ -32,6 +33,10 @@ export async function createPostulacion(formData: FormData) {
 
 export async function updatePostulacionEstado(id: string, estado: EstadoPostulacion) {
   return store.updatePostulacionEstado(id, estado) ?? null
+}
+
+export async function updatePostulacionNotas(id: string, notas: string) {
+  return store.updatePostulacionNotas(id, notas) ?? null
 }
 
 // ---- Proyectos ----
