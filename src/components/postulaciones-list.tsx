@@ -30,8 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table"
-import { Search, ArrowUpRight, Plus } from "lucide-react"
-import Link from "next/link"
+import { Search, ArrowUpRight } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useI18n, getTipoPostulanteLabel, getEstadoPostulacionLabel, LOCALE_BY_LANG } from "@/src/lib/i18n"
 
@@ -167,7 +166,11 @@ export function PostulacionesList() {
                 </TableRow>
               ) : (
                 filtered.map((p) => (
-                  <TableRow key={p.id}>
+                  <TableRow
+                    key={p.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => router.push(`/postulaciones/${p.id}`)}
+                  >
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       {p.id}
                     </TableCell>
@@ -198,7 +201,10 @@ export function PostulacionesList() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => setConvertDialog(p)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setConvertDialog(p)
+                            }}
                           >
                             <ArrowUpRight className="h-3 w-3 mr-1" />
                             {t("postulaciones.crearProyecto")}
