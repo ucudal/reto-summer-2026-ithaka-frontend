@@ -48,6 +48,7 @@ export function UsuariosList() {
     const [newUser, setNewUser] = useState({
         nombre: "",
         email: "",
+        password: "",
         rol: "" as unknown as Rol,
         comunidad: "" as unknown as TipoComunidad,
         estado: "activo" as EstadoUsuario,
@@ -55,10 +56,12 @@ export function UsuariosList() {
     const [formErrors, setFormErrors] = useState({
         nombre: "",
         email: "",
+        password: "",
     })
     const [touchedFields, setTouchedFields] = useState({
         nombre: false,
         email: false,
+        password: false,
     })
 
     const loadData = useCallback(() => {
@@ -68,11 +71,12 @@ export function UsuariosList() {
 
     const resetNewUserForm = useCallback(() => {
         setNewUserDialog(false)
-        setFormErrors({ nombre: "", email: "" })
-        setTouchedFields({ nombre: false, email: false })
+        setFormErrors({ nombre: "", email: "", password: "" })
+        setTouchedFields({ nombre: false, email: false, password: false })
         setNewUser({
             nombre: "",
             email: "",
+            password: "",
             rol: "" as unknown as Rol,
             comunidad: "" as unknown as TipoComunidad,
             estado: "activo" as EstadoUsuario,
@@ -158,8 +162,24 @@ export function UsuariosList() {
         setFormErrors({ ...formErrors, email: error })
     }
 
+    function validatePassword(password: string) {
+        if (!password.trim()) {
+            return "La contraseña es requerida"
+        }
+        if (password.length < 8) {
+            return "La contraseña debe tener al menos 8 caracteres"
+        }
+        return ""
+    }
+
+    function handlePasswordBlur() {
+        setTouchedFields({ ...touchedFields, password: true })
+        const error = validatePassword(newUser.password)
+        setFormErrors({ ...formErrors, password: error })
+    }
+
     function validateAndSetErrors() {
-        const errors = { nombre: "", email: "" }
+        const errors = { nombre: "", email: "", password: "" }
         if (!newUser.nombre.trim()) {
             errors.nombre = "El nombre es requerido"
         }
@@ -167,6 +187,11 @@ export function UsuariosList() {
             errors.email = "El email es requerido"
         } else if (!isValidEmail(newUser.email)) {
             errors.email = "El email no es válido"
+        }
+        if (!newUser.password.trim()) {
+            errors.password = "La contraseña es requerida"
+        } else if (newUser.password.length < 8) {
+            errors.password = "La contraseña debe tener al menos 8 caracteres"
         }
         setFormErrors(errors)
         return Object.values(errors).every((err) => err === "")
@@ -182,6 +207,12 @@ export function UsuariosList() {
             .map((n) => n[0])
             .join("")
             .toUpperCase()
+        
+        // Actualmente usando mock data. Para usar el backend real:
+        // import { usuariosService } from "@/src/services/usuarios.service"
+        // Cambiar USE_MOCK a false en usuarios.service.ts
+        // Y usar: await usuariosService.create({ ...newUser, fotoPerfil: ... })
+        
         store.addUsuario({
             nombre: newUser.nombre,
             email: newUser.email,
@@ -197,6 +228,7 @@ export function UsuariosList() {
         setNewUser({
             nombre: "",
             email: "",
+            password: "",
             rol: "tutor",
             comunidad: "docente_funcionario",
             estado: "activo",
@@ -465,11 +497,12 @@ export function UsuariosList() {
                 onOpenChange={(open) => {
                     if (!open) {
                         setNewUserDialog(false)
-                        setFormErrors({ nombre: "", email: "" })
-                        setTouchedFields({ nombre: false, email: false })
+                        setFormErrors({ nombre: "", email: "", password: "" })
+                        setTouchedFields({ nombre: false, email: false, password: false })
                         setNewUser({
                             nombre: "",
                             email: "",
+                            password: "",
                             rol: "" as unknown as Rol,
                             comunidad: "" as unknown as TipoComunidad,
                             estado: "activo",
@@ -522,6 +555,20 @@ export function UsuariosList() {
                                         />
                                     </div>
                                     <div>
+                                        {touchedFields.password && formErrors.password && (
+                                            <p className="text-xs text-red-500 font-medium mb-1">{formErrors.password}</p>
+                                        )}
+                                        <label className="text-xs font-medium text-muted-foreground mb-2 block">Contraseña</label>
+                                        <Input
+                                            type="password"
+                                            placeholder="Mínimo 8 caracteres"
+                                            value={newUser.password}
+                                            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                            onBlur={handlePasswordBlur}
+                                            className={formErrors.password && touchedFields.password ? "border-red-500" : ""}
+                                        />
+                                    </div>
+                                    <div>
                                         <label className="text-xs font-medium text-muted-foreground mb-2 block">Rol</label>
                                         <Select value={newUser.rol} onValueChange={(value) => setNewUser({ ...newUser, rol: value as Rol })}>
                                             <SelectTrigger>
@@ -559,7 +606,7 @@ export function UsuariosList() {
                         </Button>
                         <Button
                             onClick={createNewUsuario}
-                            disabled={loading || !newUser.nombre.trim() || !newUser.email.trim() || !isValidEmail(newUser.email)}
+                            disabled={loading || !newUser.nombre.trim() || !newUser.email.trim() || !isValidEmail(newUser.email) || !newUser.password.trim() || newUser.password.length < 8}
                             className="bg-blue-600 hover:bg-blue-700"
                         >
                             Crear Usuario
