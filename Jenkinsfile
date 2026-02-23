@@ -7,7 +7,7 @@ kind: Pod
 spec:
   containers:
   - name: kaniko
-    image: gcr.io/kaniko-project/executor:latest
+    image: gcr.io/kaniko-project/executor:debug
     command:
     - cat
     tty: true
@@ -27,24 +27,49 @@ spec:
   }
 
   environment {
-    REGISTRY = "docker.io/martinc813"         
-    IMAGE_NAME = "ithaka-frontend-martin"
-    CREDENTIALS_ID = "registry-credentials"   
-    NAMESPACE = "ticket-platform"             
-    DEPLOYMENT_NAME = "mi-app-deployment"     
-    CONTAINER_NAME = "mi-app"                  
+    REGISTRY        = "docker.io/martinc813"
+    IMAGE_NAME      = "ithaka-frontend-martin"
+    CREDENTIALS_ID  = "registry-credentials"
+    INFRA_REPO_URL  = "https://github.com/TU_ORG/infra-repo.git"
+    INFRA_REPO_CRED_ID = ""
+    NAMESPACE       = "ticket-platform"
+    DEPLOYMENT_NAME = "frontend-ithaka"
+    CONTAINER_NAME  = "frontend-ithaka"
+  }
+
+  triggers {
+    // Dispara en cada push a main (requiere webhook configurado en GitHub → Jenkins)
+    githubPush()
   }
 
   stages {
-    stage('Checkout') {
+
+    stage('Checkout APP') {
       steps {
         checkout scm
-        container('kaniko') {
+      }
+    }
+
+    stage('Prepare') {
+      steps {
+        script {
+          env.GIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+          env.IMAGE_TAG = "${env.GIT_SHORT}-${env.BUILD_NUMBER}"
+          echo "Image tag: ${env.IMAGE_TAG}"
+        }
+      }
+    }
+
+    stage('Checkout INFRA repo') {
+      steps {
+        // Clonamos en subdirectorio para no pisar el workspace del APP
+        dir('infra') {
           script {
-            // TAG: usaremos commit short + build number para trazabilidad
-            env.GIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-            env.IMAGE_TAG = "${env.GIT_SHORT}-${env.BUILD_NUMBER}"
-            echo "Image tag: ${env.IMAGE_TAG}"
+            if (env.INFRA_REPO_CRED_ID?.trim()) {
+              git url: env.INFRA_REPO_URL, credentialsId: env.INFRA_REPO_CRED_ID, branch: 'main'
+            } else {
+              git url: env.INFRA_REPO_URL, branch: 'main'
+            }
           }
         }
       }
@@ -53,9 +78,13 @@ spec:
     stage('Build & Push image (Kaniko)') {
       steps {
         container('kaniko') {
-          // Crear archivo de credenciales Docker usando las credenciales guardadas en Jenkins
-          withCredentials([usernamePassword(credentialsId: env.CREDENTIALS_ID, usernameVariable: 'REG_USER', passwordVariable: 'REG_PASS')]) {
-            sh '''
+          withCredentials([usernamePassword(
+            credentialsId: env.CREDENTIALS_ID,
+            usernameVariable: 'REG_USER',
+            passwordVariable: 'REG_PASS'
+          )]) {
+            // Generamos config.json con interpolación correcta
+            sh """
 set -e
 mkdir -p /kaniko/.docker
 cat > /kaniko/.docker/config.json <<EOF
@@ -68,13 +97,12 @@ cat > /kaniko/.docker/config.json <<EOF
   }
 }
 EOF
-'''
-            // Ejecutar Kaniko: construye y pushea la imagen
+"""
             sh """
-/kaniko/executor \
-  --context=${WORKSPACE} \
-  --dockerfile=${WORKSPACE}/Dockerfile \
-  --destination=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
+/kaniko/executor \\
+  --context=${WORKSPACE} \\
+  --dockerfile=${WORKSPACE}/Dockerfile \\
+  --destination=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \\
   --cache=true
 """
           }
@@ -82,23 +110,32 @@ EOF
       }
     }
 
-    stage('Deploy to Kubernetes') {
+    stage('Apply infra manifests') {
       steps {
         container('kubectl') {
-          // Actualiza el deployment a la nueva imagen y espera rollout
-          sh "kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} -n ${NAMESPACE}"
-          sh "kubectl rollout status deployment/${DEPLOYMENT_NAME} -n ${NAMESPACE} --timeout=120s"
+          // Aplica todos los manifests del repo infra (ajusta la ruta si es distinta a k8s/)
+          sh "kubectl apply -f infra/k8s/ -n ${NAMESPACE}"
         }
       }
     }
+
+    stage('Update image & rollout') {
+      steps {
+        container('kubectl') {
+          sh "kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} -n ${NAMESPACE}"
+          sh "kubectl rollout status deployment/${DEPLOYMENT_NAME} -n ${NAMESPACE} --timeout=180s"
+        }
+      }
+    }
+
   }
 
   post {
     success {
-      echo "Deploy exitoso: ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+      echo "✅ Deploy exitoso: ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} → ns: ${NAMESPACE}"
     }
     failure {
-      echo "Algo falló en el pipeline."
+      echo "❌ Pipeline falló - revisá los logs"
     }
   }
 }
