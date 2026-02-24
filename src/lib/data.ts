@@ -54,7 +54,10 @@ export interface Postulacion {
   email: string
   tipoPostulante: TipoPostulante
   descripcion: string
+  notas: string
   estado: EstadoPostulacion
+  convocatoria?: string
+  completitud?: "completa" | "incompleta"
   creadoEn: string
   actualizadoEn: string
 }
@@ -286,6 +289,7 @@ const seedPostulaciones: Postulacion[] = [
     tipoPostulante: "estudiante_ucu",
     descripcion:
       "App de seguimiento de huella de carbono para estudiantes universitarios, con gamificacion y desafios comunitarios.",
+    notas: "Primer contacto realizado. Pendiente reunion de presentacion.",
     estado: "recibida",
     creadoEn: daysAgo(2),
     actualizadoEn: daysAgo(2),
@@ -298,6 +302,7 @@ const seedPostulaciones: Postulacion[] = [
     tipoPostulante: "externo",
     descripcion:
       "Plataforma IoT para monitoreo de cultivos en pequenas parcelas, con alertas y recomendaciones basadas en datos.",
+    notas: "",
     estado: "recibida",
     creadoEn: daysAgo(5),
     actualizadoEn: daysAgo(5),
@@ -310,6 +315,7 @@ const seedPostulaciones: Postulacion[] = [
     tipoPostulante: "estudiante_ucu",
     descripcion:
       "Plataforma de bienestar mental para estudiantes con meditaciones guiadas, seguimiento emocional y comunidad de apoyo.",
+    notas: "",
     estado: "borrador",
     creadoEn: daysAgo(1),
     actualizadoEn: daysAgo(1),
@@ -322,6 +328,7 @@ const seedPostulaciones: Postulacion[] = [
     tipoPostulante: "alumni",
     descripcion:
       "App de educacion financiera para jovenes adultos con simulaciones de inversion y presupuesto personal.",
+    notas: "",
     estado: "recibida",
     creadoEn: daysAgo(8),
     actualizadoEn: daysAgo(7),
@@ -557,6 +564,15 @@ const seedProyectos: Proyecto[] = [
 
 const seedAuditLog: AuditEntry[] = [
   {
+    id: "AUD-000",
+    entidadTipo: "postulacion",
+    entidadId: "POST-0001",
+    accion: "Postulacion recibida",
+    detalle: "Registrada desde el chatbot",
+    usuario: "Sistema",
+    fecha: daysAgo(2),
+  },
+  {
     id: "AUD-001",
     entidadTipo: "proyecto",
     entidadId: "PROY-0001",
@@ -646,8 +662,19 @@ class IthakaStore {
   updatePostulacionEstado(id: string, estado: EstadoPostulacion) {
     const p = this.getPostulacion(id)
     if (p) {
+      const oldEstado = p.estado
       p.estado = estado
       p.actualizadoEn = new Date().toISOString()
+      this.addAudit("postulacion", id, "Cambio de estado", `${oldEstado} -> ${estado}`, "Sistema")
+    }
+    return p
+  }
+  updatePostulacionNotas(id: string, notas: string) {
+    const p = this.getPostulacion(id)
+    if (p) {
+      p.notas = notas
+      p.actualizadoEn = new Date().toISOString()
+      this.addAudit("postulacion", id, "Notas actualizadas", "Se actualizaron las notas internas", "Operador")
     }
     return p
   }
@@ -682,6 +709,7 @@ class IthakaStore {
     post.estado = "recibida"
     post.actualizadoEn = now
     this.addAudit("proyecto", proy.id, "Proyecto creado", `Desde postulacion ${post.id}`, "Sistema")
+    this.addAudit("postulacion", post.id, "Convertida a proyecto", `Proyecto ${proy.id} creado`, "Sistema")
     return proy
   }
   updateProyectoEstado(id: string, estado: EstadoProyecto, usuario: string) {
