@@ -1,3 +1,4 @@
+
 pipeline {
   agent {
     kubernetes {
@@ -77,15 +78,14 @@ spec:
     }
 
     stage('Build & Push image (Kaniko)') {
-      steps {
-        container('kaniko') {
-          withCredentials([usernamePassword(
-            credentialsId: env.CREDENTIALS_ID,
-            usernameVariable: 'REG_USER',
-            passwordVariable: 'REG_PASS'
-          )]) {
-            // Generamos config.json con interpolación correcta
-            sh """
+  steps {
+    container('kaniko') {
+      withCredentials([usernamePassword(
+        credentialsId: env.CREDENTIALS_ID,
+        usernameVariable: 'REG_USER',
+        passwordVariable: 'REG_PASS'
+      )]) {
+        sh """
 set -e
 mkdir -p /kaniko/.docker
 cat > /kaniko/.docker/config.json <<EOF
@@ -99,17 +99,17 @@ cat > /kaniko/.docker/config.json <<EOF
 }
 EOF
 """
-sh """
+        sh """
 /kaniko/executor \\
-  --context=${APP_WORKSPACE} \\
-  --dockerfile=${APP_WORKSPACE}/Dockerfile \\
+  --context=${APP_WORKSPACE}/infra \\
+  --dockerfile=${APP_WORKSPACE}/infra/Dockerfile \\
   --destination=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \\
   --cache=true
 """
-          }
-        }
       }
     }
+  }
+}
 
     stage('Apply infra manifests') {
       steps {
