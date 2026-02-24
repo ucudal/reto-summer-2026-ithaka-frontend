@@ -56,6 +56,8 @@ export interface Postulacion {
   descripcion: string
   notas: string
   estado: EstadoPostulacion
+  convocatoria?: string
+  completitud?: "completa" | "incompleta"
   creadoEn: string
   actualizadoEn: string
 }
