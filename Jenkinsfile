@@ -95,7 +95,9 @@ spec:
           )]) {
             sh """
 docker login -u ${REG_USER} -p ${REG_PASS}
-docker build -t ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} -f ${APP_WORKSPACE}/infra/Dockerfile ${APP_WORKSPACE}/infra
+docker build -t ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
+  -f ${APP_WORKSPACE}/infra/Dockerfile \
+  ${APP_WORKSPACE}
 docker push ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
 docker logout
 """
