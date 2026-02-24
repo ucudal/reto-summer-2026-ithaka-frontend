@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { getPostulaciones, convertirAProyecto } from "@/src/app/actions"
+import { convertirAProyecto } from "@/src/app/actions"
 import type { Postulacion, TipoPostulante } from "@/src/lib/data"
 import { StatusBadge } from "@/src/components/status-badge"
 import { Card, CardContent } from "@/src/components/ui/card"
@@ -30,24 +30,44 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table"
-import { Search, ArrowUpRight } from "lucide-react"
+import { Search, ArrowUpRight, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useI18n, getTipoPostulanteLabel, getEstadoPostulacionLabel, LOCALE_BY_LANG } from "@/src/lib/i18n"
+import { postulacionesService } from "@/src/services/postulaciones.service"
+import Link from "next/link"
 
 export function PostulacionesList() {
   const [postulaciones, setPostulaciones] = useState<Postulacion[]>([])
   const [search, setSearch] = useState("")
   const [filterEstado, setFilterEstado] = useState<string>("all")
-  const [filterTipo, setFilterTipo] = useState<string>("all")
+  const [filterFechaDesde, setFilterFechaDesde] = useState("")
+  const [filterFechaHasta, setFilterFechaHasta] = useState("")
+  const [filterConvocatoria, setFilterConvocatoria] = useState<string>("all")
+  const [filterCompletitud, setFilterCompletitud] = useState<string>("all")
   const [convertDialog, setConvertDialog] = useState<Postulacion | null>(null)
   const [loading, setLoading] = useState(false)
+  const [loadingList, setLoadingList] = useState(false)
   const router = useRouter()
   const { t, lang } = useI18n()
 
   const loadData = useCallback(async () => {
-    const data = await getPostulaciones()
-    setPostulaciones(data)
-  }, [])
+    setLoadingList(true)
+    try {
+      const data = await postulacionesService.getAll({
+        estado: filterEstado === "all" ? undefined : (filterEstado as "borrador" | "recibida"),
+        fechaDesde: filterFechaDesde || undefined,
+        fechaHasta: filterFechaHasta || undefined,
+        convocatoria: filterConvocatoria === "all" ? undefined : filterConvocatoria,
+        completitud:
+          filterCompletitud === "all"
+            ? undefined
+            : (filterCompletitud as "completa" | "incompleta"),
+      })
+      setPostulaciones(data)
+    } finally {
+      setLoadingList(false)
+    }
+  }, [filterCompletitud, filterConvocatoria, filterEstado, filterFechaDesde, filterFechaHasta])
 
   useEffect(() => {
     loadData()
@@ -58,10 +78,12 @@ export function PostulacionesList() {
       p.nombreProyecto.toLowerCase().includes(search.toLowerCase()) ||
       p.nombrePostulante.toLowerCase().includes(search.toLowerCase()) ||
       p.email.toLowerCase().includes(search.toLowerCase())
-    const matchEstado = filterEstado === "all" || p.estado === filterEstado
-    const matchTipo = filterTipo === "all" || p.tipoPostulante === filterTipo
-    return matchSearch && matchEstado && matchTipo
+    return matchSearch
   })
+
+  const convocatorias = Array.from(
+    new Set(postulaciones.map((p) => p.convocatoria).filter(Boolean)),
+  ) as string[]
 
   async function handleConvert() {
     if (!convertDialog) return
@@ -122,18 +144,39 @@ export function PostulacionesList() {
                 <SelectItem value="recibida">{getEstadoPostulacionLabel(lang, "recibida")}</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filterTipo} onValueChange={setFilterTipo}>
+            <Input
+              type="date"
+              value={filterFechaDesde}
+              onChange={(e) => setFilterFechaDesde(e.target.value)}
+              className="w-full sm:w-44"
+            />
+            <Input
+              type="date"
+              value={filterFechaHasta}
+              onChange={(e) => setFilterFechaHasta(e.target.value)}
+              className="w-full sm:w-44"
+            />
+            <Select value={filterConvocatoria} onValueChange={setFilterConvocatoria}>
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder={t("postulaciones.tipoPostulante")} />
+                <SelectValue placeholder="Convocatoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t("postulaciones.todosTipos")}</SelectItem>
-                <SelectItem value="estudiante_ucu">{getTipoPostulanteLabel(lang, "estudiante_ucu")}</SelectItem>
-                <SelectItem value="alumni">{getTipoPostulanteLabel(lang, "alumni")}</SelectItem>
-                <SelectItem value="docente_funcionario">
-                  {getTipoPostulanteLabel(lang, "docente_funcionario")}
-                </SelectItem>
-                <SelectItem value="externo">{getTipoPostulanteLabel(lang, "externo")}</SelectItem>
+                <SelectItem value="all">Todas las convocatorias</SelectItem>
+                {convocatorias.map((convocatoria) => (
+                  <SelectItem key={convocatoria} value={convocatoria}>
+                    {convocatoria}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterCompletitud} onValueChange={setFilterCompletitud}>
+              <SelectTrigger className="w-full sm:w-44">
+                <SelectValue placeholder="Completitud" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="completa">Completa</SelectItem>
+                <SelectItem value="incompleta">Incompleta</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -156,7 +199,13 @@ export function PostulacionesList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {loadingList ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    Cargando postulaciones...
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
                     <p className="text-muted-foreground">
