@@ -9,7 +9,6 @@ import {
   Inbox,
   FolderKanban,
   ClipboardCheck,
-  FileText,
   ChevronLeft,
   ChevronRight,
   Users,
@@ -27,7 +26,6 @@ const navItems = [
   { href: "/postulaciones", label: "nav.postulaciones", icon: Inbox },
   { href: "/proyectos", label: "nav.proyectos", icon: FolderKanban },
   { href: "/evaluaciones", label: "nav.evaluaciones", icon: ClipboardCheck },
-  { href: "/nueva-postulacion", label: "nav.nuevaPostulacion", icon: FileText },
   {
     href: "/gestion-usuarios",
     label: "nav.gestionUsuarios",
