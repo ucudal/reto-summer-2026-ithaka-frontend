@@ -2,7 +2,7 @@ import axios, { InternalAxiosRequestConfig } from "axios";
 import { env } from "../helpers";
 
 const ithakaApi = axios.create({
-  baseURL: env.API_URL,
+  baseURL: `${env.API_URL}/api/v1`,
 });
 
 ithakaApi.interceptors.request.use((config: InternalAxiosRequestConfig) => {
