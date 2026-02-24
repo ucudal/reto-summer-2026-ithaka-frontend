@@ -1,4 +1,3 @@
-
 pipeline {
   agent {
     kubernetes {
@@ -7,22 +6,32 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: kaniko
-    image: gcr.io/kaniko-project/executor:debug
+  - name: docker
+    image: docker:24-dind
+    securityContext:
+      privileged: true
+    env:
+    - name: DOCKER_TLS_CERTDIR
+      value: ""
+    volumeMounts:
+    - name: docker-graph-storage
+      mountPath: /var/lib/docker
+  - name: builder
+    image: docker:24-cli
     command:
     - cat
     tty: true
-    volumeMounts:
-      - name: kanikodir
-        mountPath: /kaniko/.docker
+    env:
+    - name: DOCKER_HOST
+      value: tcp://localhost:2375
   - name: kubectl
     image: bitnami/kubectl:latest
     command:
     - cat
     tty: true
   volumes:
-    - name: kanikodir
-      emptyDir: {}
+  - name: docker-graph-storage
+    emptyDir: {}
 """
     }
   }
@@ -51,20 +60,19 @@ spec:
     }
 
     stage('Prepare') {
-  steps {
-    script {
-      env.GIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-      env.IMAGE_TAG = "${env.GIT_SHORT}-${env.BUILD_NUMBER}"
-      env.APP_WORKSPACE = "${WORKSPACE}"  // <-- guardamos el path antes de entrar a /infra
-      echo "Image tag: ${env.IMAGE_TAG}"
-      echo "App workspace: ${env.APP_WORKSPACE}"
+      steps {
+        script {
+          env.GIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+          env.IMAGE_TAG = "${env.GIT_SHORT}-${env.BUILD_NUMBER}"
+          env.APP_WORKSPACE = "${WORKSPACE}"
+          echo "Image tag: ${env.IMAGE_TAG}"
+          echo "App workspace: ${env.APP_WORKSPACE}"
+        }
+      }
     }
-  }
-}
 
     stage('Checkout INFRA repo') {
       steps {
-        // Clonamos en subdirectorio para no pisar el workspace del APP
         dir('infra') {
           script {
             if (env.INFRA_REPO_CRED_ID?.trim()) {
@@ -77,45 +85,29 @@ spec:
       }
     }
 
-    stage('Build & Push image (Kaniko)') {
-  steps {
-    container('kaniko') {
-      withCredentials([usernamePassword(
-        credentialsId: env.CREDENTIALS_ID,
-        usernameVariable: 'REG_USER',
-        passwordVariable: 'REG_PASS'
-      )]) {
-        sh """
-set -e
-mkdir -p /kaniko/.docker
-cat > /kaniko/.docker/config.json <<EOF
-{
-  "auths": {
-    "https://index.docker.io/v1/": {
-      "username": "${REG_USER}",
-      "password": "${REG_PASS}"
-    }
-  }
-}
-EOF
+    stage('Build & Push image') {
+      steps {
+        container('builder') {
+          withCredentials([usernamePassword(
+            credentialsId: env.CREDENTIALS_ID,
+            usernameVariable: 'REG_USER',
+            passwordVariable: 'REG_PASS'
+          )]) {
+            sh """
+docker login -u ${REG_USER} -p ${REG_PASS}
+docker build -t ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} -f ${APP_WORKSPACE}/infra/Dockerfile ${APP_WORKSPACE}/infra
+docker push ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+docker logout
 """
-        sh """
-/kaniko/executor \\
-  --context=${APP_WORKSPACE}/infra \\
-  --dockerfile=${APP_WORKSPACE}/infra/Dockerfile \\
-  --destination=docker.io/martinc813/${IMAGE_NAME}:${IMAGE_TAG} \\
-  --cache=true
-"""
+          }
+        }
       }
     }
-  }
-}
 
     stage('Apply infra manifests') {
       steps {
         container('kubectl') {
-          // Aplica todos los manifests del repo infra
-          sh "kubectl apply -f infra/k8s/ -n ${NAMESPACE}"
+          sh "kubectl apply -f ${APP_WORKSPACE}/infra/k8s/ -n ${NAMESPACE}"
         }
       }
     }
