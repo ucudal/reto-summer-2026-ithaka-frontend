@@ -31,23 +31,22 @@ export const useAuthStore = () => {
     dispatch(onChecking());
     try {
       const response = await ithakaApi.post("/auth/login", {
-        //ESTO AJUSTAR CUANDO TENGAMOS EL BACK
         email,
         password,
       });
 
-      const { data } = response.data; //esto tambien ajustar dependiendo como manden la respuesta
+      const { access_token, usuario } = response.data;
 
       if (typeof window !== "undefined") {
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("token", access_token);
         localStorage.setItem("token-init-date", Date.now().toString());
       }
 
       dispatch(
         onLogin({
-          name: data.user.name,
-          role: data.user.role,
-          email: data.user.email,
+          name: usuario.nombre,
+          role: usuario.rol,
+          email: usuario.email,
         }),
       );
     } catch (err) {
@@ -55,8 +54,7 @@ export const useAuthStore = () => {
 
       if (axios.isAxiosError(err)) {
         message =
-          err.response?.data?.meta?.message ??
-          err.response?.data?.message ??
+          err.response?.data?.detail ??
           message;
       } else if (err instanceof Error) {
         message = err.message || message;
@@ -74,17 +72,14 @@ export const useAuthStore = () => {
     }
 
     try {
-      const resp = await ithakaApi.get("/renew"); //ESTO AJUSTAR LUEGO TAMBIEN SI ES QUE NOS DAN UN ENDPOINT DE RENEW
-      const { data } = resp.data;
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("token-init-date", Date.now().toString());
+      const resp = await ithakaApi.get("/auth/me");
+      const usuario = resp.data;
 
       dispatch(
         onLogin({
-          name: data.user.name,
-          email: data.user.email,
-          role: data.user.role,
+          name: usuario.nombre,
+          email: usuario.email,
+          role: usuario.rol,
         }),
       );
     } catch (error) {

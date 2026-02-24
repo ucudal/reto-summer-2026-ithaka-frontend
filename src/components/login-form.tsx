@@ -14,22 +14,33 @@ import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useI18n } from "@/src/lib/i18n";
-
-const roles = ["admin", "coordinador", "tutor", "operador"];
+import { useAuthStore } from "@/src/hooks/useAuthStore";
 
 export function LoginForm() {
   const router = useRouter();
   const { setRole } = useRole();
   const { t } = useI18n();
+  const { startLogin, checkAuthToken, status, user, errorMessage } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     email: "",
     password: "",
     rememberMe: false,
   });
+
+  useEffect(() => {
+    checkAuthToken();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (status === "authenticated" && user) {
+      setRole(user.role as "admin" | "coordinador" | "tutor" | "operador");
+      router.push("/");
+    }
+  }, [status, user, router, setRole]);
 
   function update(field: string, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -37,36 +48,7 @@ export function LoginForm() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      // Credenciales hardcodeadas para testing
-      const validUsers: { [key: string]: { password: string; role: "admin" | "coordinador" | "tutor" | "operador" } } = {
-        "admin@ithaka.com": { password: "admin123", role: "admin" },
-        "coordinador@ithaka.com": { password: "coord123", role: "coordinador" },
-        "tutor@ithaka.com": { password: "tutor123", role: "tutor" },
-        "operador@ithaka.com": { password: "oper123", role: "operador" },
-      };
-
-      const user = validUsers[form.email];
-      
-      if (!user || user.password !== form.password) {
-        alert(t("login.errorInvalid"));
-        setLoading(false);
-        return;
-      }
-
-      // Setear rol según las credenciales
-      setRole(user.role);
-      
-      // Redirigir al dashboard
-      router.push("/");
-    } catch (error) {   
-      console.error("Login error:", error);
-      alert(t("login.errorGeneric"));
-    } finally {
-      setLoading(false);
-    }
+    await startLogin({ email: form.email, password: form.password });
   }
 
   return (
@@ -145,13 +127,20 @@ export function LoginForm() {
                 </div>
               </div>
 
+              {/* Error Message */}
+              {errorMessage && (
+                <p className="text-sm text-destructive text-center">
+                  {errorMessage}
+                </p>
+              )}
+
               {/* Sign In Button */}
               <Button
                 type="submit"
-                disabled={loading || !form.email || !form.password}
+                disabled={status === "checking" || !form.email || !form.password}
                 className="w-full h-10 text-base font-semibold"
               >
-                {loading ? t("login.signing") : t("login.signIn")}
+                {status === "checking" ? t("login.signing") : t("login.signIn")}
               </Button>
             </form>
           </CardContent>
