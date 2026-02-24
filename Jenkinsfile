@@ -50,14 +50,16 @@ spec:
     }
 
     stage('Prepare') {
-      steps {
-        script {
-          env.GIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-          env.IMAGE_TAG = "${env.GIT_SHORT}-${env.BUILD_NUMBER}"
-          echo "Image tag: ${env.IMAGE_TAG}"
-        }
-      }
+  steps {
+    script {
+      env.GIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+      env.IMAGE_TAG = "${env.GIT_SHORT}-${env.BUILD_NUMBER}"
+      env.APP_WORKSPACE = "${WORKSPACE}"  // <-- guardamos el path antes de entrar a /infra
+      echo "Image tag: ${env.IMAGE_TAG}"
+      echo "App workspace: ${env.APP_WORKSPACE}"
     }
+  }
+}
 
     stage('Checkout INFRA repo') {
       steps {
@@ -97,10 +99,10 @@ cat > /kaniko/.docker/config.json <<EOF
 }
 EOF
 """
-            sh """
+sh """
 /kaniko/executor \\
-  --context=${WORKSPACE} \\
-  --dockerfile=${WORKSPACE}/Dockerfile \\
+  --context=${APP_WORKSPACE} \\
+  --dockerfile=${APP_WORKSPACE}/Dockerfile \\
   --destination=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \\
   --cache=true
 """
