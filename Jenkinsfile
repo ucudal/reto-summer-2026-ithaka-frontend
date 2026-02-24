@@ -30,7 +30,7 @@ spec:
     REGISTRY        = "docker.io/martinc813"
     IMAGE_NAME      = "ithaka-frontend-martin"
     CREDENTIALS_ID  = "registry-credentials"
-    INFRA_REPO_URL  = "https://github.com/TU_ORG/infra-repo.git"
+    INFRA_REPO_URL  = "https://github.com/ucudal/reto-summer-2026-ithaka-frontend-infra"
     INFRA_REPO_CRED_ID = ""
     NAMESPACE       = "ticket-platform"
     DEPLOYMENT_NAME = "frontend-ithaka"
@@ -38,7 +38,6 @@ spec:
   }
 
   triggers {
-    // Dispara en cada push a main (requiere webhook configurado en GitHub → Jenkins)
     githubPush()
   }
 
@@ -113,7 +112,7 @@ EOF
     stage('Apply infra manifests') {
       steps {
         container('kubectl') {
-          // Aplica todos los manifests del repo infra (ajusta la ruta si es distinta a k8s/)
+          // Aplica todos los manifests del repo infra
           sh "kubectl apply -f infra/k8s/ -n ${NAMESPACE}"
         }
       }
