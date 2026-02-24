@@ -91,7 +91,7 @@ mkdir -p /kaniko/.docker
 cat > /kaniko/.docker/config.json <<EOF
 {
   "auths": {
-    "${REGISTRY}": {
+    "https://index.docker.io/v1/": {
       "username": "${REG_USER}",
       "password": "${REG_PASS}"
     }
@@ -103,7 +103,7 @@ EOF
 /kaniko/executor \\
   --context=${APP_WORKSPACE}/infra \\
   --dockerfile=${APP_WORKSPACE}/infra/Dockerfile \\
-  --destination=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \\
+  --destination=docker.io/martinc813/${IMAGE_NAME}:${IMAGE_TAG} \\
   --cache=true
 """
       }
