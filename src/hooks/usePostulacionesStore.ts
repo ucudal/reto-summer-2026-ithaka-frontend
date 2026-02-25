@@ -9,7 +9,7 @@ import {
   onPostulacionError,
   clearSelectedPostulacion,
 } from "@/src/store"
-import { ithakaApi } from "@/src/api"
+import { casosService } from "@/src/services/casos.service"
 import axios from "axios"
 
 export const usePostulacionesStore = () => {
@@ -21,7 +21,7 @@ export const usePostulacionesStore = () => {
   const fetchPostulacion = async (id: number) => {
     dispatch(onLoadingPostulacion())
     try {
-      const { data } = await ithakaApi.get(`/postulaciones/${id}`)
+      const data = await casosService.getCaso(id)
       dispatch(onSetSelectedPostulacion(data))
     } catch (err) {
       let message = "Error al cargar la postulación"
