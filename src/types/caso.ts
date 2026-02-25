@@ -7,5 +7,9 @@ export interface Caso {
   id_emprendedor: number
   id_convocatoria: number | null
   id_estado: number
+  nombre_estado?: string
+  tipo_caso?: "Postulacion" | "Proyecto" | string
+  convocatoria?: string | null
+  nombre_convocatoria?: string | null
   fecha_creacion: string
 }
