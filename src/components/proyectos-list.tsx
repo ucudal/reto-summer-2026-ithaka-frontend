@@ -19,46 +19,44 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table";
-import type { TipoPostulante } from "@/src/lib/data";
 import {
   getEstadoProyectoLabel,
   getTipoPostulanteLabel,
-  LOCALE_BY_LANG,
   useI18n,
 } from "@/src/lib/i18n";
+import { useProyectosStore } from "@/src/hooks";
 import { Eye, Search } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useProyectos } from "../hooks/useProyectos";
 
 export function ProyectosList() {
-  const { proyectos, loading, error, obtenerTodosProyectos } = useProyectos();
+  const {
+    status,
+    proyectos,
+    errorMessage,
+    fetchProyectos,
+    setSelectedProyecto,
+  } = useProyectosStore();
   const [search, setSearch] = useState("");
   const [filterEstado, setFilterEstado] = useState<string>("all");
   const [filterTipo, setFilterTipo] = useState<string>("all");
   const { t, lang } = useI18n();
 
   useEffect(() => {
-    obtenerTodosProyectos();
-    console.log("ProyectosList: ", proyectos);
-  }, []);
+    fetchProyectos();
+  }, [fetchProyectos]);
 
   const filtered = proyectos.filter((p) => {
     const matchSearch =
       p.nombre_caso.toLowerCase().includes(search.toLowerCase()) ||
       (p.emprendedor?.toLowerCase() ?? "").includes(search.toLowerCase()) ||
       p.id_caso == Number(search);
-    const matchEstado = filterEstado === "all" || p.estado === filterEstado;
-    return matchSearch && matchEstado;
+    const matchEstado = filterEstado === "all" || p.nombre_estado === filterEstado;
+    const tipoPostulante =
+      String((p as { tipo_postulante?: string }).tipo_postulante ?? "").toLowerCase();
+    const matchTipo = filterTipo === "all" || tipoPostulante === filterTipo;
+    return matchSearch && matchEstado && matchTipo;
   });
-
-  function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString(LOCALE_BY_LANG[lang], {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  }
 
   return (
     <div className="p-6 lg:p-8">
@@ -144,18 +142,29 @@ export function ProyectosList() {
                 <TableHead>{t("postulaciones.id")}</TableHead>
                 <TableHead>{t("postulaciones.proyecto")}</TableHead>
                 <TableHead>{t("postulaciones.postulante")}</TableHead>
-                <TableHead>{t("postulaciones.tipo")}</TableHead>
                 <TableHead>{t("postulaciones.estado")}</TableHead>
-                <TableHead>{t("proyectos.responsable")}</TableHead>
+                <TableHead>{t("proyectos.responsable")}</TableHead>             
                 <TableHead className="text-right">
                   {t("postulaciones.acciones")}
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {status === "loading" ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    {t("proyectoDetail.loading")}
+                  </TableCell>
+                </TableRow>
+              ) : status === "error" ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-destructive">
+                    {errorMessage || t("proyectos.noResults")}
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
                     <p className="text-muted-foreground">
                       {t("proyectos.noResults")}
                     </p>
@@ -174,7 +183,7 @@ export function ProyectosList() {
                       <span className="text-sm">{p.emprendedor}</span>
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={p.estado ?? ""} />
+                      <StatusBadge status={p.nombre_estado ?? ""} />
                     </TableCell>
                     <TableCell>
                       <span className="text-sm">
@@ -185,11 +194,11 @@ export function ProyectosList() {
                         )}
                       </span>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(p.fecha_creacion)}
-                    </TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/proyectos/${p.id_caso}`}>
+                      <Link
+                        href={`/proyectos/${p.id_caso}`}
+                        onClick={() => setSelectedProyecto(p)}
+                      >
                         <Button size="sm" variant="outline">
                           <Eye className="h-3 w-3 mr-1" />
                           {t("proyectos.verDetalle")}

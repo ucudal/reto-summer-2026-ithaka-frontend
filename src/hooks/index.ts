@@ -1,2 +1,3 @@
-export * from "./usePostulacionesStore"
-export * from "./useAuthStore"
+export * from "./useAuthStore";
+export * from "./usePostulacionesStore";
+export * from "./useProyectosStore";
