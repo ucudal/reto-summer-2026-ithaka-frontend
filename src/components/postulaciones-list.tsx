@@ -1,6 +1,17 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/src/components/ui/alert-dialog"
 import type { Postulacion, TipoPostulante } from "@/src/lib/data"
 import { StatusBadge } from "@/src/components/status-badge"
 import { Card, CardContent } from "@/src/components/ui/card"
@@ -20,7 +31,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table"
-import { Search } from "lucide-react"
+import { Search, Eye, Download } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/src/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useI18n, getTipoPostulanteLabel, getEstadoPostulacionLabel, LOCALE_BY_LANG } from "@/src/lib/i18n"
 import { casosService } from "@/src/services/casos.service"
@@ -96,6 +109,40 @@ export function PostulacionesList() {
     })
   }
 
+  function exportToCSV() {
+    const headers = [
+      t("postulaciones.id"),
+      t("postulaciones.proyecto"),
+      t("postulaciones.postulante"),
+      "Email",
+      t("postulaciones.tipo"),
+      t("postulaciones.estado"),
+      "Convocatoria",
+      "Completitud",
+      t("postulaciones.fecha"),
+    ]
+    const rows = filtered.map((p) => [
+      p.id,
+      p.nombreProyecto,
+      p.nombrePostulante,
+      p.email,
+      getTipoPostulanteLabel(lang, p.tipoPostulante as TipoPostulante),
+      getEstadoPostulacionLabel(lang, p.estado),
+      p.convocatoria ?? "",
+      p.completitud ?? "",
+      formatDate(p.creadoEn),
+    ])
+    const escape = (v: string) => `"${String(v).replace(/"/g, '""')}"`
+    const csv = [headers, ...rows].map((r) => r.map(escape).join(",")).join("\n")
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `postulaciones_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="p-6 lg:p-8">
       <div className="flex items-center justify-between mb-6">
@@ -105,6 +152,26 @@ export function PostulacionesList() {
             {t("postulaciones.subtitle")}
           </p>
         </div>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" size="sm" disabled={filtered.length === 0}>
+              <Download className="h-4 w-4 mr-2" />
+              {t("postulaciones.exportarCSV")}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("postulaciones.exportarCSVTitulo")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("postulaciones.exportarCSVDescripcion")} {filtered.length} {t("postulaciones.exportarCSVRegistros")}.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("common.cancelar")}</AlertDialogCancel>
+              <AlertDialogAction onClick={exportToCSV}>{t("postulaciones.exportarCSV")}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Filters */}
@@ -236,7 +303,14 @@ export function PostulacionesList() {
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDate(p.creadoEn)}
                     </TableCell>
-                    <TableCell className="text-right" />
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <Link href={`/postulaciones/${p.id}`}>
+                        <Button size="sm" variant="outline">
+                          <Eye className="h-3 w-3 mr-1" />
+                          {t("postulaciones.verDetalle")}
+                        </Button>
+                      </Link>
+                    </TableCell>
                   </TableRow>
                 ))
               )}

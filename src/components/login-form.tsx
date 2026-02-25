@@ -22,7 +22,7 @@ export function LoginForm() {
   const router = useRouter();
   const { setRole } = useRole();
   const { t } = useI18n();
-  const { startLogin, status, user, errorMessage } = useAuthStore();
+  const { startLogin, checkAuthToken, status, user, errorMessage } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     email: "",
@@ -31,7 +31,7 @@ export function LoginForm() {
   });
 
   useEffect(() => {
-
+    checkAuthToken();
   }, []);
 
   // Redirigir cuando el usuario esté autenticado

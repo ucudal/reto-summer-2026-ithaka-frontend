@@ -30,13 +30,10 @@ export const useAuthStore = () => {
   const startLogin = async ({ email, password }: LoginCredentials) => {
     dispatch(onChecking());
     try {
-      const response = await ithakaApi.post("/auth/login", {
+      const { data } = await ithakaApi.post("/auth/login", {
         email,
         password,
       });
-
-      const { data } = response; //esto tambien ajustar dependiendo como manden la respuesta
-      console.log("Login successful:", data);
 
       if (typeof window !== "undefined") {
         localStorage.setItem("token", data.access_token);
@@ -54,10 +51,7 @@ export const useAuthStore = () => {
       let message = "Credenciales incorrectas";
 
       if (axios.isAxiosError(err)) {
-        message =
-          err.response?.data?.meta?.message ??
-          err.response?.data?.message ??
-          message;
+        message = err.response?.data?.detail ?? message;
       } else if (err instanceof Error) {
         message = err.message || message;
       }
@@ -67,6 +61,9 @@ export const useAuthStore = () => {
   };
 
   const checkAuthToken = async () => {
+    if (typeof window === "undefined") return;
+
+    dispatch(onChecking());
     const token = localStorage.getItem("token");
     if (!token) {
       dispatch(onLogout(""));
@@ -74,20 +71,16 @@ export const useAuthStore = () => {
     }
 
     try {
-      const resp = await ithakaApi.get("/renew"); //ESTO AJUSTAR LUEGO TAMBIEN SI ES QUE NOS DAN UN ENDPOINT DE RENEW
-      const { data } = resp.data;
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("token-init-date", Date.now().toString());
+      const { data } = await ithakaApi.get("/auth/me");
 
       dispatch(
         onLogin({
-          name: data.user.name,
-          email: data.user.email,
-          role: data.user.role,
+          name: data.nombre,
+          email: data.email,
+          role: data.rol,
         }),
       );
-    } catch (error) {
+    } catch {
       localStorage.removeItem("token");
       localStorage.removeItem("token-init-date");
       dispatch(onLogout(""));
@@ -98,7 +91,7 @@ export const useAuthStore = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("token-init-date");
     dispatch(onLogout(""));
-    
+
     if (typeof window !== "undefined") {
       window.location.href = "/login";
     }
