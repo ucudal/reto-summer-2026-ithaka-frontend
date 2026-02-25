@@ -25,10 +25,10 @@ spec:
     - name: DOCKER_HOST
       value: tcp://localhost:2375
   - name: kubectl
-    image: bitnami/kubectl:latest
-    command:
-    - cat
-    tty: true
+  image: lachlanevenson/k8s-kubectl:latest
+  command:
+  - cat
+  tty: true
   volumes:
   - name: docker-graph-storage
     emptyDir: {}
