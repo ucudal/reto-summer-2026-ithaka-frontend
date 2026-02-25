@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { store } from "@/src/lib/data"
+import { usuariosService } from "@/src/services/usuarios.service"
 import type { Usuario, Rol, EstadoUsuario, TipoComunidad } from "@/src/lib/data"
 import { ROL_LABELS, COMUNIDAD_LABELS } from "@/src/lib/data"
 import { StatusBadge } from "@/src/components/status-badge"
@@ -35,6 +35,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/src/components/ui/avatar"
 import { Search, Plus } from "lucide-react"
 
 export function UsuariosList() {
+    console.log("=== UsuariosList montado ===")
     const [usuarios, setUsuarios] = useState<Usuario[]>([])
     const [search, setSearch] = useState("")
     const [filterRol, setFilterRol] = useState<string>("all")
@@ -64,10 +65,20 @@ export function UsuariosList() {
         password: false,
     })
 
-    const loadData = useCallback(() => {
-        const data = store.getUsuarios()
-        setUsuarios(data)
-    }, [])
+    const loadData = async () => {
+        console.log("=== loadData iniciado ===")
+        try {
+            setLoading(true)
+            console.log("=== Llamando usuariosService.getAll() ===")
+            const data = await usuariosService.getAll()
+            console.log("Usuarios cargados en el componente:", data)
+            setUsuarios(data)
+        } catch (error) {
+            console.error("Error cargando usuarios:", error)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     const resetNewUserForm = useCallback(() => {
         setNewUserDialog(false)
@@ -84,8 +95,23 @@ export function UsuariosList() {
     }, [])
 
     useEffect(() => {
-        loadData()
-    }, [loadData])
+        console.log("=== useEffect ejecutándose, llamando loadData ===")
+        const fetchData = async () => {
+            console.log("=== fetchData iniciado dentro de useEffect ===")
+            try {
+                setLoading(true)
+                console.log("=== Llamando usuariosService.getAll() directamente ===")
+                const data = await usuariosService.getAll()
+                console.log("Usuarios recibidos:", data)
+                setUsuarios(data)
+            } catch (error) {
+                console.error("Error:", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchData()
+    }, [])
 
     const filtered = usuarios.filter((u) => {
         const matchSearch =
@@ -109,14 +135,20 @@ export function UsuariosList() {
         }).length,
     }
 
-    function deleteUsuario() {
+    async function deleteUsuario() {
         if (!deleteDialog) return
         setLoading(true)
-        store.deleteUsuario(deleteDialog.id)
-        const data = store.getUsuarios()
-        setUsuarios([...data])
-        setDeleteDialog(null)
-        setLoading(false)
+        try {
+            await usuariosService.delete(deleteDialog.id)
+            
+            // Recargar la lista
+            await loadData()
+            setDeleteDialog(null)
+        } catch (error) {
+            console.error("Error eliminando usuario:", error)
+        } finally {
+            setLoading(false)
+        }
     }
 
     function isValidEmail(email: string): boolean {
@@ -197,58 +229,59 @@ export function UsuariosList() {
         return Object.values(errors).every((err) => err === "")
     }
 
-    function createNewUsuario() {
+    async function createNewUsuario() {
         if (!validateAndSetErrors()) {
             return
         }
         setLoading(true)
-        const initials = newUser.nombre
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .toUpperCase()
-        
-        // Actualmente usando mock data. Para usar el backend real:
-        // import { usuariosService } from "@/src/services/usuarios.service"
-        // Cambiar USE_MOCK a false en usuarios.service.ts
-        // Y usar: await usuariosService.create({ ...newUser, fotoPerfil: ... })
-        
-        store.addUsuario({
-            nombre: newUser.nombre,
-            email: newUser.email,
-            rol: newUser.rol,
-            comunidad: newUser.comunidad,
-            estado: "activo",
-            fotoPerfil: `https://ui-avatars.com/api/?name=${initials}&background=354558&color=fff&bold=true`,
-            ultimoAcceso: new Date().toISOString(),
-        })
-        const data = store.getUsuarios()
-        setUsuarios([...data])
-        setNewUserDialog(false)
-        setNewUser({
-            nombre: "",
-            email: "",
-            password: "",
-            rol: "tutor",
-            comunidad: "docente_funcionario",
-            estado: "activo",
-        })
-        setLoading(false)
+        try {
+            const initials = newUser.nombre
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+            
+            const user = await usuariosService.create({
+                nombre: newUser.nombre,
+                email: newUser.email,
+                password: newUser.password,
+                rol: newUser.rol,
+                comunidad: newUser.comunidad,
+                estado: "activo",
+                fotoPerfil: `https://ui-avatars.com/api/?name=${initials}&background=354558&color=fff&bold=true`,
+                actualizadoEn: new Date().toISOString(),
+            })
+            
+            // Recargar la lista
+            await loadData()
+            setNewUserDialog(false)
+            resetNewUserForm()
+        } catch (error) {
+            console.error("Error creando usuario:", error)
+        } finally {
+            setLoading(false)
+        }
     }
 
-    function saveEditingUser() {
+    async function saveEditingUser() {
         if (!editingUser) return
         setLoading(true)
-        store.updateUsuario(editingUser.id, {
-            rol: editingUser.rol,
-            comunidad: editingUser.comunidad,
-            estado: editingUser.estado,
-        })
-        const data = store.getUsuarios()
-        setUsuarios([...data])
-        setEditDialog(null)
-        setEditingUser(null)
-        setLoading(false)
+        try {
+            await usuariosService.update(editingUser.id, {
+                nombre: editingUser.nombre,
+                email: editingUser.email,
+                rol: editingUser.rol,
+            })
+            
+            // Recargar la lista
+            await loadData()
+            setEditDialog(null)
+            setEditingUser(null)
+        } catch (error) {
+            console.error("Error actualizando usuario:", error)
+        } finally {
+            setLoading(false)
+        }
     }
 
     function formatDate(dateStr: string) {

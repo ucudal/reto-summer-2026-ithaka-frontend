@@ -1,8 +1,5 @@
 import ithakaApi from "@/src/api/api"
-import { store } from "@/src/lib/data"
 import type { Usuario, Rol } from "@/src/lib/data"
-
-const USE_MOCK = true
 
 // DTOs para coincidir con el backend
 interface UsuarioBackendResponse {
@@ -52,9 +49,9 @@ function transformBackendToFrontend(backendUser: UsuarioBackendResponse): Usuari
     nombre: backendUser.nombre + (backendUser.apellido ? ` ${backendUser.apellido}` : ""),
     email: backendUser.email,
     rol: idRolToRol[backendUser.id_rol] || "operador",
-    comunidad: "externo", // El backend no maneja este campo
+    comunidad: "externo",
     estado: backendUser.activo ? "activo" : "inactivo",
-    fotoPerfil: "", // El backend no maneja este campo
+    fotoPerfil: "",
     ultimoAcceso: new Date().toISOString(),
     creadoEn: new Date().toISOString(),
     actualizadoEn: new Date().toISOString(),
@@ -63,20 +60,24 @@ function transformBackendToFrontend(backendUser: UsuarioBackendResponse): Usuari
 
 export const usuariosService = {
   async getAll(): Promise<Usuario[]> {
-    if (USE_MOCK) {
-      return Promise.resolve(store.getUsuarios())
+    try {
+      const { data } = await ithakaApi.get<UsuarioBackendResponse[]>("/api/v1/usuarios/")
+      console.log("Usuarios del backend:", data)
+      const transformed = data.map(transformBackendToFrontend)
+      console.log("Usuarios transformados:", transformed)
+      return transformed
+    } catch (error) {
+      console.error("Error en getAll:", error)
+      throw error
     }
+  },
 
-    const { data } = await ithakaApi.get<UsuarioBackendResponse[]>("/usuarios")
-    return data.map(transformBackendToFrontend)
+  async getById(id: string): Promise<Usuario> {
+    const { data } = await ithakaApi.get<UsuarioBackendResponse>(`/api/v1/usuarios/${id}`)
+    return transformBackendToFrontend(data)
   },
 
   async create(payload: Omit<Usuario, "id" | "creadoEn" | "ultimoAcceso"> & { password: string }) {
-    if (USE_MOCK) {
-      return Promise.resolve(store.addUsuario(payload as any))
-    }
-
-    // Separar nombre y apellido
     const nombreParts = payload.nombre.split(" ")
     const nombre = nombreParts[0]
     const apellido = nombreParts.slice(1).join(" ") || ""
@@ -89,18 +90,13 @@ export const usuariosService = {
       id_rol: rolToIdRol[payload.rol] || 4,
     }
 
-    const { data } = await ithakaApi.post<UsuarioBackendResponse>("/usuarios", dto)
+    const { data } = await ithakaApi.post<UsuarioBackendResponse>("/api/v1/usuarios/", dto)
     return transformBackendToFrontend(data)
   },
 
   async update(id: string, payload: Partial<Usuario> & { password?: string }) {
-    if (USE_MOCK) {
-      return Promise.resolve(store.updateUsuario(id, payload))
-    }
-
     const dto: UpdateUsuarioDTO = {}
 
-    // Si se actualiza el nombre, separar en nombre y apellido
     if (payload.nombre) {
       const nombreParts = payload.nombre.split(" ")
       dto.nombre = nombreParts[0]
@@ -119,24 +115,16 @@ export const usuariosService = {
       dto.password = payload.password
     }
 
-    const { data } = await ithakaApi.put<UsuarioBackendResponse>(`/usuarios/${id}`, dto)
+    const { data } = await ithakaApi.put<UsuarioBackendResponse>(`/api/v1/usuarios/${id}`, dto)
     return transformBackendToFrontend(data)
   },
 
   async delete(id: string) {
-    if (USE_MOCK) {
-      return Promise.resolve(store.deleteUsuario(id))
-    }
-
-    await ithakaApi.delete(`/usuarios/${id}`)
+    await ithakaApi.delete(`/api/v1/usuarios/${id}`)
   },
 
   async reactivate(id: string) {
-    if (USE_MOCK) {
-      return Promise.resolve(store.updateUsuario(id, { estado: "activo" }))
-    }
-
-    const { data } = await ithakaApi.put<UsuarioBackendResponse>(`/usuarios/${id}/reactivar`, {})
+    const { data } = await ithakaApi.put<UsuarioBackendResponse>(`/api/v1/usuarios/${id}/reactivar`, {})
     return transformBackendToFrontend(data)
   },
 }
