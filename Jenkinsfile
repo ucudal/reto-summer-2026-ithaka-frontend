@@ -16,6 +16,14 @@ spec:
     volumeMounts:
     - name: docker-graph-storage
       mountPath: /var/lib/docker
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "400m"
+        memory: "512Mi"
+
   - name: builder
     image: docker:24-cli
     command:
@@ -24,6 +32,14 @@ spec:
     env:
     - name: DOCKER_HOST
       value: tcp://localhost:2375
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "250m"
+        memory: "256Mi"
+
   - name: kubectl
     image: lachlanevenson/k8s-kubectl:latest
     command:
@@ -31,15 +47,17 @@ spec:
     tty: true
     resources:
       requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
         cpu: "250m"
         memory: "256Mi"
-      limits:
-        cpu: "500m"
-        memory: "512Mi"
+
   volumes:
   - name: docker-graph-storage
     emptyDir: {}
 """
+
     }
   }
 
