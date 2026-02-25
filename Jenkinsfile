@@ -13,12 +13,12 @@ spec:
     tty: true
     resources:
       requests:
-        cpu: "1"
-        memory: "2Gi"
+        cpu: "500m"
+        memory: "1Gi"
         ephemeral-storage: "10Gi"
       limits:
-        cpu: "2"
-        memory: "4Gi"
+        cpu: "1"
+        memory: "2Gi"
         ephemeral-storage: "15Gi"
     volumeMounts:
       - name: kanikodir
