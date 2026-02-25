@@ -1,188 +1,133 @@
-"use client";
+"use client"
 
+import { useEffect, useState, useCallback } from "react"
 import {
-  addApoyo,
-  addHito,
-  getAuditForEntity,
-  saveEvaluacion,
-  toggleApoyoEstado,
-  toggleHito,
+  getProyecto,
   updateProyectoEstado,
   updateProyectoResponsable,
-} from "@/src/app/actions";
-import { StatusBadge } from "@/src/components/status-badge";
-import { Badge } from "@/src/components/ui/badge";
-import { Button } from "@/src/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/src/components/ui/card";
-import { Checkbox } from "@/src/components/ui/checkbox";
-import { Input } from "@/src/components/ui/input";
-import { Label } from "@/src/components/ui/label";
+  addApoyo,
+  toggleApoyoEstado,
+  addHito,
+  toggleHito,
+  saveEvaluacion,
+  getAuditForEntity,
+} from "@/src/app/actions"
+import type { Proyecto, AuditEntry, EstadoProyecto, TipoApoyo } from "@/src/lib/data"
+import { RESPONSABLES_ITHAKA } from "@/src/lib/data"
+import { useI18n, getEstadoProyectoLabel, getTipoApoyoLabel, getPotencialLabel, getEtapaLabel, LOCALE_BY_LANG } from "@/src/lib/i18n"
+import { StatusBadge } from "@/src/components/status-badge"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/card"
+import { Button } from "@/src/components/ui/button"
+import { Input } from "@/src/components/ui/input"
+import { Label } from "@/src/components/ui/label"
+import { Textarea } from "@/src/components/ui/textarea"
+import { Checkbox } from "@/src/components/ui/checkbox"
+import { Badge } from "@/src/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/src/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/src/components/ui/tabs";
-import { Textarea } from "@/src/components/ui/textarea";
-import { useProyectosStore } from "@/src/hooks";
-import type {
-  AuditEntry,
-  EstadoProyecto,
-  Proyecto,
-  TipoApoyo,
-} from "@/src/lib/data";
-import { RESPONSABLES_ITHAKA } from "@/src/lib/data";
-import {
-  getEstadoProyectoLabel,
-  getEtapaLabel,
-  getPotencialLabel,
-  getTipoApoyoLabel,
-  LOCALE_BY_LANG,
-  useI18n,
-} from "@/src/lib/i18n";
-import type { Caso } from "@/src/types/caso";
+} from "@/src/components/ui/select"
 import {
   ArrowLeft,
-  CheckCircle2,
-  Circle,
+  User,
   Clock,
-  History,
   Mail,
   Plus,
-  User,
-} from "lucide-react";
-import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+  CheckCircle2,
+  Circle,
+  History,
+} from "lucide-react"
+import Link from "next/link"
 
 export function ProyectoDetail({ id }: { id: string }) {
-  const [audit, setAudit] = useState<AuditEntry[]>([]);
-  const [newHito, setNewHito] = useState("");
-  const [nuevoApoyo, setNuevoApoyo] = useState<TipoApoyo | "">("");
+  const [proyecto, setProyecto] = useState<Proyecto | null>(null)
+  const [audit, setAudit] = useState<AuditEntry[]>([])
+  const [newHito, setNewHito] = useState("")
+  const [nuevoApoyo, setNuevoApoyo] = useState<TipoApoyo | "">("")
   const [evalForm, setEvalForm] = useState({
     etapaEmprendimiento: "",
     potencialIncubacion: "" as "alto" | "medio" | "bajo" | "",
     pertenenciaUCU: false,
     notas: "",
-  });
-  const { t, lang } = useI18n();
-  const { status, selectedProyecto, errorMessage, fetchProyecto } =
-    useProyectosStore();
-
-  const mapEstadoProyecto = (nombreEstado: string | null): EstadoProyecto => {
-    const normalized = (nombreEstado ?? "").toLowerCase().replace(/\s+/g, "_");
-    if (
-      normalized === "recibida" ||
-      normalized === "en_evaluacion" ||
-      normalized === "proyecto_activo" ||
-      normalized === "incubado" ||
-      normalized === "cerrado"
-    ) {
-      return normalized;
-    }
-    return "recibida";
-  };
-
-  const mapCasoToProyecto = (caso: Caso): Proyecto => ({
-    id: String(caso.id_caso),
-    postulacionId: String(caso.id_caso),
-    nombreProyecto: caso.nombre_caso,
-    nombrePostulante: caso.emprendedor ?? "-",
-    email: "-",
-    tipoPostulante: "externo",
-    descripcion: caso.descripcion ?? "-",
-    estado: mapEstadoProyecto(caso.nombre_estado ?? null),
-    responsableIthaka: caso.tutor ?? "",
-    apoyos: [],
-    hitos: [],
-    creadoEn: caso.fecha_creacion,
-    actualizadoEn: caso.fecha_creacion,
-  });
-
-  const isSelectedForCurrentId =
-    selectedProyecto && String(selectedProyecto.id_caso) === String(id);
-
-  const proyecto = isSelectedForCurrentId
-    ? mapCasoToProyecto(selectedProyecto)
-    : null;
+  })
+  const { t, lang } = useI18n()
 
   const loadData = useCallback(async () => {
-    const [a] = await Promise.all([getAuditForEntity(id), fetchProyecto(id)]);
-    setAudit(a);
-  }, [id, fetchProyecto]);
+    const [p, a] = await Promise.all([
+      getProyecto(id),
+      getAuditForEntity(id),
+    ])
+    setProyecto(p)
+    setAudit(a)
+    if (p?.evaluacion) {
+      setEvalForm({
+        etapaEmprendimiento: p.evaluacion.etapaEmprendimiento,
+        potencialIncubacion: p.evaluacion.potencialIncubacion,
+        pertenenciaUCU: p.evaluacion.pertenenciaUCU,
+        notas: p.evaluacion.notas,
+      })
+    }
+  }, [id])
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadData()
+  }, [loadData])
 
-  if (status === "loading" || !proyecto) {
+  if (!proyecto) {
     return (
       <div className="p-6 lg:p-8">
-        <p className="text-muted-foreground">
-          {errorMessage || t("proyectoDetail.loading")}
-        </p>
+        <p className="text-muted-foreground">{t("proyectoDetail.loading")}</p>
       </div>
-    );
+    )
   }
 
   async function handleEstadoChange(estado: EstadoProyecto) {
-    await updateProyectoEstado(id, estado);
-    loadData();
+    await updateProyectoEstado(id, estado)
+    loadData()
   }
 
   async function handleResponsableChange(responsable: string) {
-    await updateProyectoResponsable(id, responsable);
-    loadData();
+    await updateProyectoResponsable(id, responsable)
+    loadData()
   }
 
   async function handleAddApoyo() {
-    if (!nuevoApoyo) return;
-    await addApoyo(id, nuevoApoyo);
-    setNuevoApoyo("");
-    loadData();
+    if (!nuevoApoyo) return
+    await addApoyo(id, nuevoApoyo)
+    setNuevoApoyo("")
+    loadData()
   }
 
   async function handleToggleApoyo(apoyoId: string) {
-    await toggleApoyoEstado(id, apoyoId);
-    loadData();
+    await toggleApoyoEstado(id, apoyoId)
+    loadData()
   }
 
   async function handleAddHito() {
-    if (!newHito.trim()) return;
-    await addHito(id, newHito.trim());
-    setNewHito("");
-    loadData();
+    if (!newHito.trim()) return
+    await addHito(id, newHito.trim())
+    setNewHito("")
+    loadData()
   }
 
   async function handleToggleHito(hitoId: string) {
-    await toggleHito(id, hitoId);
-    loadData();
+    await toggleHito(id, hitoId)
+    loadData()
   }
 
   async function handleSaveEvaluacion() {
-    if (!evalForm.potencialIncubacion || !evalForm.etapaEmprendimiento) return;
+    if (!evalForm.potencialIncubacion || !evalForm.etapaEmprendimiento) return
     await saveEvaluacion(id, {
       etapaEmprendimiento: evalForm.etapaEmprendimiento,
-      potencialIncubacion: evalForm.potencialIncubacion as
-        | "alto"
-        | "medio"
-        | "bajo",
+      potencialIncubacion: evalForm.potencialIncubacion as "alto" | "medio" | "bajo",
       pertenenciaUCU: evalForm.pertenenciaUCU,
       notas: evalForm.notas,
-    });
-    loadData();
+    })
+    loadData()
   }
 
   function formatDate(dateStr: string) {
@@ -192,7 +137,7 @@ export function ProyectoDetail({ id }: { id: string }) {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    });
+    })
   }
 
   return (
@@ -213,8 +158,7 @@ export function ProyectoDetail({ id }: { id: string }) {
               <StatusBadge status={proyecto.estado} />
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              {proyecto.id} | {t("proyectoDetail.postulacion")}:{" "}
-              {proyecto.postulacionId}
+              {proyecto.id} | {t("proyectoDetail.postulacion")}: {proyecto.postulacionId}
             </p>
           </div>
         </div>
@@ -228,9 +172,7 @@ export function ProyectoDetail({ id }: { id: string }) {
               <User className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">
-                {t("proyectoDetail.postulante")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("proyectoDetail.postulante")}</p>
               <p className="text-sm font-medium">{proyecto.nombrePostulante}</p>
             </div>
           </CardContent>
@@ -241,9 +183,7 @@ export function ProyectoDetail({ id }: { id: string }) {
               <Mail className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">
-                {t("login.email")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("login.email")}</p>
               <p className="text-sm font-medium">{proyecto.email}</p>
             </div>
           </CardContent>
@@ -254,12 +194,8 @@ export function ProyectoDetail({ id }: { id: string }) {
               <Clock className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">
-                {t("proyectoDetail.creado")}
-              </p>
-              <p className="text-sm font-medium">
-                {formatDate(proyecto.creadoEn)}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("proyectoDetail.creado")}</p>
+              <p className="text-sm font-medium">{formatDate(proyecto.creadoEn)}</p>
             </div>
           </CardContent>
         </Card>
@@ -268,9 +204,7 @@ export function ProyectoDetail({ id }: { id: string }) {
       {/* Description */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <p className="text-xs text-muted-foreground mb-1">
-            {t("proyectoDetail.descripcion")}
-          </p>
+          <p className="text-xs text-muted-foreground mb-1">{t("proyectoDetail.descripcion")}</p>
           <p className="text-sm leading-relaxed">{proyecto.descripcion}</p>
         </CardContent>
       </Card>
@@ -278,21 +212,15 @@ export function ProyectoDetail({ id }: { id: string }) {
       {/* Tabs */}
       <Tabs defaultValue="gestion" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="gestion">
-            {t("proyectoDetail.gestion")}
-          </TabsTrigger>
+          <TabsTrigger value="gestion">{t("proyectoDetail.gestion")}</TabsTrigger>
           <TabsTrigger value="apoyos">
             {t("proyectoDetail.apoyos")} ({proyecto.apoyos.length})
           </TabsTrigger>
           <TabsTrigger value="hitos">
             {t("proyectoDetail.hitos")} ({proyecto.hitos.length})
           </TabsTrigger>
-          <TabsTrigger value="evaluacion">
-            {t("proyectoDetail.evaluacion")}
-          </TabsTrigger>
-          <TabsTrigger value="auditoria">
-            {t("proyectoDetail.auditoria")}
-          </TabsTrigger>
+          <TabsTrigger value="evaluacion">{t("proyectoDetail.evaluacion")}</TabsTrigger>
+          <TabsTrigger value="auditoria">{t("proyectoDetail.auditoria")}</TabsTrigger>
         </TabsList>
 
         {/* Tab: Gestion */}
@@ -300,9 +228,7 @@ export function ProyectoDetail({ id }: { id: string }) {
           <div className="grid gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">
-                  {t("proyectoDetail.estadoTitle")}
-                </CardTitle>
+                <CardTitle className="text-base">{t("proyectoDetail.estadoTitle")}</CardTitle>
                 <CardDescription>
                   {t("proyectoDetail.estadoDesc")}
                 </CardDescription>
@@ -316,15 +242,7 @@ export function ProyectoDetail({ id }: { id: string }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(
-                      [
-                        "recibida",
-                        "en_evaluacion",
-                        "proyecto_activo",
-                        "incubado",
-                        "cerrado",
-                      ] as const
-                    ).map((key) => (
+                    {(["recibida", "en_evaluacion", "proyecto_activo", "incubado", "cerrado"] as const).map((key) => (
                       <SelectItem key={key} value={key}>
                         {getEstadoProyectoLabel(lang, key)}
                       </SelectItem>
@@ -351,14 +269,10 @@ export function ProyectoDetail({ id }: { id: string }) {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue
-                      placeholder={t("proyectoDetail.selectResponsable")}
-                    />
+                    <SelectValue placeholder={t("proyectoDetail.selectResponsable")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="sin_asignar">
-                      {t("proyectoDetail.sinAsignar")}
-                    </SelectItem>
+                    <SelectItem value="sin_asignar">{t("proyectoDetail.sinAsignar")}</SelectItem>
                     {RESPONSABLES_ITHAKA.map((r) => (
                       <SelectItem key={r} value={r}>
                         {r}
@@ -393,15 +307,7 @@ export function ProyectoDetail({ id }: { id: string }) {
                     <SelectValue placeholder={t("proyectoDetail.tipoApoyo")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {(
-                      [
-                        "validalab",
-                        "eolo",
-                        "mentoria",
-                        "tfg",
-                        "incubadora_ulises",
-                      ] as const
-                    ).map((key) => (
+                    {(["validalab", "eolo", "mentoria", "tfg", "incubadora_ulises"] as const).map((key) => (
                       <SelectItem key={key} value={key}>
                         {getTipoApoyoLabel(lang, key)}
                       </SelectItem>
@@ -437,12 +343,10 @@ export function ProyectoDetail({ id }: { id: string }) {
                         <StatusBadge status={a.estado} />
                         <span className="text-xs text-muted-foreground">
                           {t("proyectoDetail.desde")}:{" "}
-                          {new Date(a.fechaInicio).toLocaleDateString(
-                            LOCALE_BY_LANG[lang],
-                          )}
+                          {new Date(a.fechaInicio).toLocaleDateString(LOCALE_BY_LANG[lang])}
                           {a.fechaFin &&
                             ` - ${t("proyectoDetail.hasta")}: ${new Date(
-                              a.fechaFin,
+                              a.fechaFin
                             ).toLocaleDateString(LOCALE_BY_LANG[lang])}`}
                         </span>
                       </div>
@@ -451,9 +355,7 @@ export function ProyectoDetail({ id }: { id: string }) {
                         variant="outline"
                         onClick={() => handleToggleApoyo(a.id)}
                       >
-                        {a.estado === "activo"
-                          ? t("proyectoDetail.finalizar")
-                          : t("proyectoDetail.reactivar")}
+                        {a.estado === "activo" ? t("proyectoDetail.finalizar") : t("proyectoDetail.reactivar")}
                       </Button>
                     </div>
                   ))}
@@ -467,10 +369,10 @@ export function ProyectoDetail({ id }: { id: string }) {
         <TabsContent value="hitos">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">
-                {t("proyectoDetail.hitosTitle")}
-              </CardTitle>
-              <CardDescription>{t("proyectoDetail.hitosDesc")}</CardDescription>
+              <CardTitle className="text-base">{t("proyectoDetail.hitosTitle")}</CardTitle>
+              <CardDescription>
+                {t("proyectoDetail.hitosDesc")}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {/* Add hito */}
@@ -504,7 +406,7 @@ export function ProyectoDetail({ id }: { id: string }) {
                       onClick={() => handleToggleHito(h.id)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
-                          handleToggleHito(h.id);
+                          handleToggleHito(h.id)
                         }
                       }}
                       role="button"
@@ -557,20 +459,10 @@ export function ProyectoDetail({ id }: { id: string }) {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue
-                        placeholder={t("proyectoDetail.seleccionarEtapa")}
-                      />
+                      <SelectValue placeholder={t("proyectoDetail.seleccionarEtapa")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {(
-                        [
-                          "Ideacion",
-                          "Validacion",
-                          "Traccion",
-                          "Escalamiento",
-                          "Consolidacion",
-                        ] as const
-                      ).map((key) => (
+                      {(["Ideacion", "Validacion", "Traccion", "Escalamiento", "Consolidacion"] as const).map((key) => (
                         <SelectItem key={key} value={key}>
                           {getEtapaLabel(lang, key)}
                         </SelectItem>
@@ -590,20 +482,12 @@ export function ProyectoDetail({ id }: { id: string }) {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue
-                        placeholder={t("proyectoDetail.seleccionarPotencial")}
-                      />
+                      <SelectValue placeholder={t("proyectoDetail.seleccionarPotencial")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="alto">
-                        {getPotencialLabel(lang, "alto")}
-                      </SelectItem>
-                      <SelectItem value="medio">
-                        {getPotencialLabel(lang, "medio")}
-                      </SelectItem>
-                      <SelectItem value="bajo">
-                        {getPotencialLabel(lang, "bajo")}
-                      </SelectItem>
+                      <SelectItem value="alto">{getPotencialLabel(lang, "alto")}</SelectItem>
+                      <SelectItem value="medio">{getPotencialLabel(lang, "medio")}</SelectItem>
+                      <SelectItem value="bajo">{getPotencialLabel(lang, "bajo")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -638,7 +522,8 @@ export function ProyectoDetail({ id }: { id: string }) {
                 className="mt-4"
                 onClick={handleSaveEvaluacion}
                 disabled={
-                  !evalForm.etapaEmprendimiento || !evalForm.potencialIncubacion
+                  !evalForm.etapaEmprendimiento ||
+                  !evalForm.potencialIncubacion
                 }
               >
                 {proyecto.evaluacion
@@ -688,8 +573,7 @@ export function ProyectoDetail({ id }: { id: string }) {
                           </span>
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {t("proyectoDetail.por")} {a.usuario}{" "}
-                          {t("proyectoDetail.el")} {formatDate(a.fecha)}
+                          {t("proyectoDetail.por")} {a.usuario} {t("proyectoDetail.el")} {formatDate(a.fecha)}
                         </p>
                       </div>
                     </div>
@@ -701,5 +585,5 @@ export function ProyectoDetail({ id }: { id: string }) {
         </TabsContent>
       </Tabs>
     </div>
-  );
+  )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import { getPostulaciones, convertirAProyecto } from "@/src/app/actions"
 import type { Postulacion, TipoPostulante } from "@/src/lib/data"
 import { StatusBadge } from "@/src/components/status-badge"
 import { Card, CardContent } from "@/src/components/ui/card"
@@ -12,6 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select"
+import { Button } from "@/src/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/src/components/ui/dialog"
 import {
   Table,
   TableBody,
@@ -20,49 +30,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table"
-import { Search } from "lucide-react"
+import { Search, ArrowUpRight, Plus } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useI18n, getTipoPostulanteLabel, getEstadoPostulacionLabel, LOCALE_BY_LANG } from "@/src/lib/i18n"
-import { casosService } from "@/src/services/casos.service"
-import axios from "axios"
 
 export function PostulacionesList() {
   const [postulaciones, setPostulaciones] = useState<Postulacion[]>([])
   const [search, setSearch] = useState("")
   const [filterEstado, setFilterEstado] = useState<string>("all")
-  const [filterFechaDesde, setFilterFechaDesde] = useState("")
-  const [filterFechaHasta, setFilterFechaHasta] = useState("")
-  const [filterConvocatoria, setFilterConvocatoria] = useState<string>("all")
-  const [filterCompletitud, setFilterCompletitud] = useState<string>("all")
-  const [loadingList, setLoadingList] = useState(false)
-  const [errorList, setErrorList] = useState<string | null>(null)
+  const [filterTipo, setFilterTipo] = useState<string>("all")
+  const [convertDialog, setConvertDialog] = useState<Postulacion | null>(null)
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { t, lang } = useI18n()
 
   const loadData = useCallback(async () => {
-    setLoadingList(true)
-    setErrorList(null)
-    try {
-      const data = await casosService.getPostulaciones(
-        filterEstado === "all" ? undefined : filterEstado,
-      )
-      setPostulaciones(data)
-    } catch (error) {
-      setPostulaciones([])
-      if (axios.isAxiosError(error)) {
-        const detail = error.response?.data?.detail
-        setErrorList(
-          typeof detail === "string"
-            ? detail
-            : "No se pudo cargar postulaciones desde el backend.",
-        )
-      } else {
-        setErrorList("No se pudo cargar postulaciones desde el backend.")
-      }
-    } finally {
-      setLoadingList(false)
-    }
-  }, [filterEstado])
+    const data = await getPostulaciones()
+    setPostulaciones(data)
+  }, [])
 
   useEffect(() => {
     loadData()
@@ -73,20 +59,21 @@ export function PostulacionesList() {
       p.nombreProyecto.toLowerCase().includes(search.toLowerCase()) ||
       p.nombrePostulante.toLowerCase().includes(search.toLowerCase()) ||
       p.email.toLowerCase().includes(search.toLowerCase())
-    const created = new Date(p.creadoEn).getTime()
-    const from = filterFechaDesde ? new Date(`${filterFechaDesde}T00:00:00`).getTime() : null
-    const to = filterFechaHasta ? new Date(`${filterFechaHasta}T23:59:59`).getTime() : null
-    const matchFecha = (from === null || created >= from) && (to === null || created <= to)
-    const matchConvocatoria =
-      filterConvocatoria === "all" || (p.convocatoria ?? "") === filterConvocatoria
-    const matchCompletitud =
-      filterCompletitud === "all" || (p.completitud ?? "incompleta") === filterCompletitud
-    return matchSearch && matchFecha && matchConvocatoria && matchCompletitud
+    const matchEstado = filterEstado === "all" || p.estado === filterEstado
+    const matchTipo = filterTipo === "all" || p.tipoPostulante === filterTipo
+    return matchSearch && matchEstado && matchTipo
   })
 
-  const convocatorias = Array.from(
-    new Set(postulaciones.map((p) => p.convocatoria).filter(Boolean)),
-  ) as string[]
+  async function handleConvert() {
+    if (!convertDialog) return
+    setLoading(true)
+    const result = await convertirAProyecto(convertDialog.id)
+    setLoading(false)
+    setConvertDialog(null)
+    if (result) {
+      router.push(`/proyectos/${result.id}`)
+    }
+  }
 
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString(LOCALE_BY_LANG[lang], {
@@ -105,6 +92,12 @@ export function PostulacionesList() {
             {t("postulaciones.subtitle")}
           </p>
         </div>
+        <Link href="/nueva-postulacion">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            {t("postulaciones.nueva")}
+          </Button>
+        </Link>
       </div>
 
       {/* Filters */}
@@ -130,39 +123,18 @@ export function PostulacionesList() {
                 <SelectItem value="recibida">{getEstadoPostulacionLabel(lang, "recibida")}</SelectItem>
               </SelectContent>
             </Select>
-            <Input
-              type="date"
-              value={filterFechaDesde}
-              onChange={(e) => setFilterFechaDesde(e.target.value)}
-              className="w-full sm:w-44"
-            />
-            <Input
-              type="date"
-              value={filterFechaHasta}
-              onChange={(e) => setFilterFechaHasta(e.target.value)}
-              className="w-full sm:w-44"
-            />
-            <Select value={filterConvocatoria} onValueChange={setFilterConvocatoria}>
+            <Select value={filterTipo} onValueChange={setFilterTipo}>
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Convocatoria" />
+                <SelectValue placeholder={t("postulaciones.tipoPostulante")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las convocatorias</SelectItem>
-                {convocatorias.map((convocatoria) => (
-                  <SelectItem key={convocatoria} value={convocatoria}>
-                    {convocatoria}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={filterCompletitud} onValueChange={setFilterCompletitud}>
-              <SelectTrigger className="w-full sm:w-44">
-                <SelectValue placeholder="Completitud" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="completa">Completa</SelectItem>
-                <SelectItem value="incompleta">Incompleta</SelectItem>
+                <SelectItem value="all">{t("postulaciones.todosTipos")}</SelectItem>
+                <SelectItem value="estudiante_ucu">{getTipoPostulanteLabel(lang, "estudiante_ucu")}</SelectItem>
+                <SelectItem value="alumni">{getTipoPostulanteLabel(lang, "alumni")}</SelectItem>
+                <SelectItem value="docente_funcionario">
+                  {getTipoPostulanteLabel(lang, "docente_funcionario")}
+                </SelectItem>
+                <SelectItem value="externo">{getTipoPostulanteLabel(lang, "externo")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -185,19 +157,7 @@ export function PostulacionesList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loadingList ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    Cargando postulaciones...
-                  </TableCell>
-                </TableRow>
-              ) : errorList ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-destructive">
-                    {errorList}
-                  </TableCell>
-                </TableRow>
-              ) : filtered.length === 0 ? (
+              {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
                     <p className="text-muted-foreground">
@@ -207,11 +167,7 @@ export function PostulacionesList() {
                 </TableRow>
               ) : (
                 filtered.map((p) => (
-                  <TableRow
-                    key={p.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => router.push(`/postulaciones/${p.id}`)}
-                  >
+                  <TableRow key={p.id}>
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       {p.id}
                     </TableCell>
@@ -236,7 +192,20 @@ export function PostulacionesList() {
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDate(p.creadoEn)}
                     </TableCell>
-                    <TableCell className="text-right" />
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {p.estado === "recibida" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setConvertDialog(p)}
+                          >
+                            <ArrowUpRight className="h-3 w-3 mr-1" />
+                            {t("postulaciones.crearProyecto")}
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -244,6 +213,31 @@ export function PostulacionesList() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Convert Dialog */}
+      <Dialog
+        open={!!convertDialog}
+        onOpenChange={(open) => !open && setConvertDialog(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("postulaciones.convertirTitulo")}</DialogTitle>
+            <DialogDescription>
+              {t("postulaciones.convertirTexto")}{" "}
+              <strong>{convertDialog?.nombreProyecto}</strong> {t("common.of")}{" "}
+              <strong>{convertDialog?.nombrePostulante}</strong>. {t("postulaciones.convertirTexto2")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConvertDialog(null)}>
+              {t("common.cancelar")}
+            </Button>
+            <Button onClick={handleConvert} disabled={loading}>
+              {loading ? t("common.creando") : t("common.confirmar")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

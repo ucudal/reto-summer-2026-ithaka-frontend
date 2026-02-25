@@ -7,10 +7,7 @@ const ithakaApi = axios.create({
 
 ithakaApi.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (typeof window !== "undefined") {
-    const token =
-      localStorage.getItem("token") ||
-      localStorage.getItem("access_token") ||
-      process.env.NEXT_PUBLIC_API_TOKEN;
+    const token = localStorage.getItem("token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

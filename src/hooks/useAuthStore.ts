@@ -31,23 +31,23 @@ export const useAuthStore = () => {
     dispatch(onChecking());
     try {
       const response = await ithakaApi.post("/auth/login", {
+        //ESTO AJUSTAR CUANDO TENGAMOS EL BACK
         email,
         password,
       });
 
-      const { data } = response; //esto tambien ajustar dependiendo como manden la respuesta
-      console.log("Login successful:", data);
+      const { data } = response.data; //esto tambien ajustar dependiendo como manden la respuesta
 
       if (typeof window !== "undefined") {
-        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("token", data.token);
         localStorage.setItem("token-init-date", Date.now().toString());
       }
 
       dispatch(
         onLogin({
-          name: data.usuario.nombre,
-          role: data.usuario.rol,
-          email: data.usuario.email,
+          name: data.user.name,
+          role: data.user.role,
+          email: data.user.email,
         }),
       );
     } catch (err) {
@@ -98,10 +98,6 @@ export const useAuthStore = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("token-init-date");
     dispatch(onLogout(""));
-    
-    if (typeof window !== "undefined") {
-      window.location.href = "/login";
-    }
   };
 
   return {

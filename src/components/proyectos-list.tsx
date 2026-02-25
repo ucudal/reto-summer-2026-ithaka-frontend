@@ -1,16 +1,19 @@
-"use client";
+"use client"
 
-import { StatusBadge } from "@/src/components/status-badge";
-import { Button } from "@/src/components/ui/button";
-import { Card, CardContent } from "@/src/components/ui/card";
-import { Input } from "@/src/components/ui/input";
+import { useEffect, useState, useCallback } from "react"
+import { getProyectos } from "@/src/app/actions"
+import type { Proyecto, TipoPostulante } from "@/src/lib/data"
+import { StatusBadge } from "@/src/components/status-badge"
+import { Card, CardContent } from "@/src/components/ui/card"
+import { Input } from "@/src/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/src/components/ui/select";
+} from "@/src/components/ui/select"
+import { Button } from "@/src/components/ui/button"
 import {
   Table,
   TableBody,
@@ -18,52 +21,49 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/src/components/ui/table";
-import {
-  getEstadoProyectoLabel,
-  getTipoPostulanteLabel,
-  useI18n,
-} from "@/src/lib/i18n";
-import { useProyectosStore } from "@/src/hooks";
-import { Eye, Search } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+} from "@/src/components/ui/table"
+import { Search, Eye } from "lucide-react"
+import Link from "next/link"
+import { useI18n, getTipoPostulanteLabel, getEstadoProyectoLabel, LOCALE_BY_LANG } from "@/src/lib/i18n"
 
 export function ProyectosList() {
-  const {
-    status,
-    proyectos,
-    errorMessage,
-    fetchProyectos,
-    setSelectedProyecto,
-  } = useProyectosStore();
-  const [search, setSearch] = useState("");
-  const [filterEstado, setFilterEstado] = useState<string>("all");
-  const [filterTipo, setFilterTipo] = useState<string>("all");
-  const { t, lang } = useI18n();
+  const [proyectos, setProyectos] = useState<Proyecto[]>([])
+  const [search, setSearch] = useState("")
+  const [filterEstado, setFilterEstado] = useState<string>("all")
+  const [filterTipo, setFilterTipo] = useState<string>("all")
+  const { t, lang } = useI18n()
+
+  const loadData = useCallback(async () => {
+    const data = await getProyectos()
+    setProyectos(data)
+  }, [])
 
   useEffect(() => {
-    fetchProyectos();
-  }, [fetchProyectos]);
+    loadData()
+  }, [loadData])
 
   const filtered = proyectos.filter((p) => {
     const matchSearch =
-      p.nombre_caso.toLowerCase().includes(search.toLowerCase()) ||
-      (p.emprendedor?.toLowerCase() ?? "").includes(search.toLowerCase()) ||
-      p.id_caso == Number(search);
-    const matchEstado = filterEstado === "all" || p.nombre_estado === filterEstado;
-    const tipoPostulante =
-      String((p as { tipo_postulante?: string }).tipo_postulante ?? "").toLowerCase();
-    const matchTipo = filterTipo === "all" || tipoPostulante === filterTipo;
-    return matchSearch && matchEstado && matchTipo;
-  });
+      p.nombreProyecto.toLowerCase().includes(search.toLowerCase()) ||
+      p.nombrePostulante.toLowerCase().includes(search.toLowerCase()) ||
+      p.id.toLowerCase().includes(search.toLowerCase())
+    const matchEstado = filterEstado === "all" || p.estado === filterEstado
+    const matchTipo = filterTipo === "all" || p.tipoPostulante === filterTipo
+    return matchSearch && matchEstado && matchTipo
+  })
+
+  function formatDate(dateStr: string) {
+    return new Date(dateStr).toLocaleDateString(LOCALE_BY_LANG[lang], {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
+  }
 
   return (
     <div className="p-6 lg:p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
-          {t("proyectos.title")}
-        </h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("proyectos.title")}</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {t("proyectos.subtitle")}
         </p>
@@ -87,24 +87,12 @@ export function ProyectosList() {
                 <SelectValue placeholder={t("postulaciones.estado")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">
-                  {t("postulaciones.todosEstados")}
-                </SelectItem>
-                <SelectItem value="recibida">
-                  {getEstadoProyectoLabel(lang, "recibida")}
-                </SelectItem>
-                <SelectItem value="en_evaluacion">
-                  {getEstadoProyectoLabel(lang, "en_evaluacion")}
-                </SelectItem>
-                <SelectItem value="proyecto_activo">
-                  {getEstadoProyectoLabel(lang, "proyecto_activo")}
-                </SelectItem>
-                <SelectItem value="incubado">
-                  {getEstadoProyectoLabel(lang, "incubado")}
-                </SelectItem>
-                <SelectItem value="cerrado">
-                  {getEstadoProyectoLabel(lang, "cerrado")}
-                </SelectItem>
+                <SelectItem value="all">{t("postulaciones.todosEstados")}</SelectItem>
+                <SelectItem value="recibida">{getEstadoProyectoLabel(lang, "recibida")}</SelectItem>
+                <SelectItem value="en_evaluacion">{getEstadoProyectoLabel(lang, "en_evaluacion")}</SelectItem>
+                <SelectItem value="proyecto_activo">{getEstadoProyectoLabel(lang, "proyecto_activo")}</SelectItem>
+                <SelectItem value="incubado">{getEstadoProyectoLabel(lang, "incubado")}</SelectItem>
+                <SelectItem value="cerrado">{getEstadoProyectoLabel(lang, "cerrado")}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterTipo} onValueChange={setFilterTipo}>
@@ -112,21 +100,13 @@ export function ProyectosList() {
                 <SelectValue placeholder={t("postulaciones.tipoPostulante")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">
-                  {t("postulaciones.todosTipos")}
-                </SelectItem>
-                <SelectItem value="estudiante_ucu">
-                  {getTipoPostulanteLabel(lang, "estudiante_ucu")}
-                </SelectItem>
-                <SelectItem value="alumni">
-                  {getTipoPostulanteLabel(lang, "alumni")}
-                </SelectItem>
+                <SelectItem value="all">{t("postulaciones.todosTipos")}</SelectItem>
+                <SelectItem value="estudiante_ucu">{getTipoPostulanteLabel(lang, "estudiante_ucu")}</SelectItem>
+                <SelectItem value="alumni">{getTipoPostulanteLabel(lang, "alumni")}</SelectItem>
                 <SelectItem value="docente_funcionario">
                   {getTipoPostulanteLabel(lang, "docente_funcionario")}
                 </SelectItem>
-                <SelectItem value="externo">
-                  {getTipoPostulanteLabel(lang, "externo")}
-                </SelectItem>
+                <SelectItem value="externo">{getTipoPostulanteLabel(lang, "externo")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -142,29 +122,18 @@ export function ProyectosList() {
                 <TableHead>{t("postulaciones.id")}</TableHead>
                 <TableHead>{t("postulaciones.proyecto")}</TableHead>
                 <TableHead>{t("postulaciones.postulante")}</TableHead>
+                <TableHead>{t("postulaciones.tipo")}</TableHead>
                 <TableHead>{t("postulaciones.estado")}</TableHead>
-                <TableHead>{t("proyectos.responsable")}</TableHead>             
-                <TableHead className="text-right">
-                  {t("postulaciones.acciones")}
-                </TableHead>
+                <TableHead>{t("proyectos.responsable")}</TableHead>
+                <TableHead>{t("proyectos.apoyos")}</TableHead>
+                <TableHead>{t("proyectos.actualizado")}</TableHead>
+                <TableHead className="text-right">{t("postulaciones.acciones")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {status === "loading" ? (
+              {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    {t("proyectoDetail.loading")}
-                  </TableCell>
-                </TableRow>
-              ) : status === "error" ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-destructive">
-                    {errorMessage || t("proyectos.noResults")}
-                  </TableCell>
-                </TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     <p className="text-muted-foreground">
                       {t("proyectos.noResults")}
                     </p>
@@ -172,33 +141,47 @@ export function ProyectosList() {
                 </TableRow>
               ) : (
                 filtered.map((p) => (
-                  <TableRow key={p.id_caso}>
+                  <TableRow key={p.id}>
                     <TableCell className="font-mono text-xs text-muted-foreground">
-                      {p.id_caso}
+                      {p.id}
                     </TableCell>
                     <TableCell className="font-medium">
-                      {p.nombre_caso}
+                      {p.nombreProyecto}
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm">{p.emprendedor}</span>
+                      <span className="text-sm">{p.nombrePostulante}</span>
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={p.nombre_estado ?? ""} />
+                      <span className="text-xs">
+                        {getTipoPostulanteLabel(lang, p.tipoPostulante as TipoPostulante)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={p.estado} />
                     </TableCell>
                     <TableCell>
                       <span className="text-sm">
-                        {p.tutor || (
+                        {p.responsableIthaka || (
                           <span className="text-muted-foreground italic">
                             {t("proyectos.sinAsignar")}
                           </span>
                         )}
                       </span>
                     </TableCell>
+                    <TableCell>
+                      <span className="text-sm">
+                        {p.apoyos.length > 0
+                          ? `${p.apoyos.filter((a) => a.estado === "activo").length} ${t("proyectos.activos")}`
+                          : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatDate(p.actualizadoEn)}
+                    </TableCell>
                     <TableCell className="text-right">
-                      <Link
-                        href={`/proyectos/${p.id_caso}`}
-                        onClick={() => setSelectedProyecto(p)}
-                      >
+                      <Link href={`/proyectos/${p.id}`}>
                         <Button size="sm" variant="outline">
                           <Eye className="h-3 w-3 mr-1" />
                           {t("proyectos.verDetalle")}
@@ -213,5 +196,5 @@ export function ProyectosList() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
