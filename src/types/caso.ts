@@ -12,4 +12,6 @@ export interface Caso {
   convocatoria?: string | null
   nombre_convocatoria?: string | null
   fecha_creacion: string
+  emprendedor?: string | "-" 
+  tutor?: string | "-"
 }
