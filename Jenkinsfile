@@ -6,40 +6,23 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: docker
-    image: docker:24-dind
-    securityContext:
-      privileged: true
-    env:
-    - name: DOCKER_TLS_CERTDIR
-      value: ""
-    volumeMounts:
-    - name: docker-graph-storage
-      mountPath: /var/lib/docker
-    resources:
-      requests:
-        cpu: "200m"
-        memory: "256Mi"
-      limits:
-        cpu: "400m"
-        memory: "512Mi"
-
-  - name: builder
-    image: docker:24-cli
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:debug
     command:
     - cat
     tty: true
-    env:
-    - name: DOCKER_HOST
-      value: tcp://localhost:2375
     resources:
       requests:
-        cpu: "100m"
-        memory: "128Mi"
+        cpu: "1"
+        memory: "2Gi"
+        ephemeral-storage: "10Gi"
       limits:
-        cpu: "250m"
-        memory: "256Mi"
-
+        cpu: "2"
+        memory: "4Gi"
+        ephemeral-storage: "15Gi"
+    volumeMounts:
+      - name: kanikodir
+        mountPath: /kaniko/.docker
   - name: kubectl
     image: lachlanevenson/k8s-kubectl:latest
     command:
@@ -49,15 +32,11 @@ spec:
       requests:
         cpu: "100m"
         memory: "128Mi"
-      limits:
-        cpu: "250m"
-        memory: "256Mi"
-
   volumes:
-  - name: docker-graph-storage
-    emptyDir: {}
+    - name: kanikodir
+      emptyDir:
+        sizeLimit: "15Gi"
 """
-
     }
   }
 
@@ -110,36 +89,48 @@ spec:
       }
     }
 
-    stage('Build & Push image') {
+    stage('Build & Push image (Kaniko)') {
       steps {
-        container('builder') {
+        container('kaniko') {
           withCredentials([usernamePassword(
             credentialsId: env.CREDENTIALS_ID,
             usernameVariable: 'REG_USER',
             passwordVariable: 'REG_PASS'
           )]) {
             sh """
-docker login -u ${REG_USER} -p ${REG_PASS}
-docker build -t ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
-  -f ${APP_WORKSPACE}/infra/Dockerfile \
-  ${APP_WORKSPACE}
-docker push ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-docker logout
+set -e
+mkdir -p /kaniko/.docker
+cat > /kaniko/.docker/config.json <<EOF
+{
+  "auths": {
+    "https://index.docker.io/v1/": {
+      "username": "${REG_USER}",
+      "password": "${REG_PASS}"
+    }
+  }
+}
+EOF
+"""
+            sh """
+/kaniko/executor \\
+  --context=${APP_WORKSPACE} \\
+  --dockerfile=${APP_WORKSPACE}/infra/Dockerfile \\
+  --destination=docker.io/martinc813/${IMAGE_NAME}:${IMAGE_TAG} \\
+  --cache=true \\
+  --single-snapshot
 """
           }
         }
       }
     }
 
-stage('Apply infra manifests') {
-  steps {
-    container('kubectl') {
-      sh "sleep 5"
-      sh "kubectl version --client"
-      sh "kubectl apply -f ${APP_WORKSPACE}/infra/k8s/ -n ${NAMESPACE}"
+    stage('Apply infra manifests') {
+      steps {
+        container('kubectl') {
+          sh "kubectl apply -f ${APP_WORKSPACE}/infra/k8s/ -n ${NAMESPACE}"
+        }
+      }
     }
-  }
-}
 
     stage('Update image & rollout') {
       steps {
