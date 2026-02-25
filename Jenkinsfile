@@ -25,10 +25,10 @@ spec:
     - name: DOCKER_HOST
       value: tcp://localhost:2375
   - name: kubectl
-    image: bitnami/kubectl:latest
-    command:
-    - cat
-    tty: true
+  image: lachlanevenson/k8s-kubectl:latest
+  command:
+  - cat
+  tty: true
   volumes:
   - name: docker-graph-storage
     emptyDir: {}
@@ -106,13 +106,15 @@ docker logout
       }
     }
 
-    stage('Apply infra manifests') {
-      steps {
-        container('kubectl') {
-          sh "kubectl apply -f ${APP_WORKSPACE}/infra/k8s/ -n ${NAMESPACE}"
-        }
-      }
+stage('Apply infra manifests') {
+  steps {
+    container('kubectl') {
+      sh "sleep 5"
+      sh "kubectl version --client"
+      sh "kubectl apply -f ${APP_WORKSPACE}/infra/k8s/ -n ${NAMESPACE}"
     }
+  }
+}
 
     stage('Update image & rollout') {
       steps {
