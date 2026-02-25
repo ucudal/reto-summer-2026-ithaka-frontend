@@ -83,7 +83,7 @@ const unpackCasos = (data: CasosListResponse): CasoApi[] =>
 export const casosService = {
   async getPostulaciones(nombreEstado?: string): Promise<Postulacion[]> {
     const backendEstado = mapPostulacionEstadoFilterToBackend(nombreEstado)
-    const { data } = await ithakaApi.get<CasosListResponse>("/api/v1/casos/", {
+    const { data } = await ithakaApi.get<CasosListResponse>("/casos/", {
       params: {
         tipo_caso: "postulacion",
         ...(backendEstado ? { nombre_estado: backendEstado } : {}),
@@ -94,7 +94,7 @@ export const casosService = {
   },
 
   async getCaso(id: number): Promise<CasoApi> {
-    const { data } = await ithakaApi.get<CasoApi>(`/api/v1/casos/${id}`)
+    const { data } = await ithakaApi.get<CasoApi>(`/casos/${id}`)
     return data
   },
 }
