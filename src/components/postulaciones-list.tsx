@@ -20,7 +20,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table"
-import { Search } from "lucide-react"
+import { Search, Eye } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/src/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useI18n, getTipoPostulanteLabel, getEstadoPostulacionLabel, LOCALE_BY_LANG } from "@/src/lib/i18n"
 import { casosService } from "@/src/services/casos.service"
@@ -236,7 +238,14 @@ export function PostulacionesList() {
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDate(p.creadoEn)}
                     </TableCell>
-                    <TableCell className="text-right" />
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <Link href={`/postulaciones/${p.id}`}>
+                        <Button size="sm" variant="outline">
+                          <Eye className="h-3 w-3 mr-1" />
+                          {t("postulaciones.verDetalle")}
+                        </Button>
+                      </Link>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
