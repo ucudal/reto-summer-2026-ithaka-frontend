@@ -43,8 +43,8 @@ spec:
     INFRA_REPO_URL  = "https://github.com/ucudal/reto-summer-2026-ithaka-frontend-infra"
     INFRA_REPO_CRED_ID = ""
     NAMESPACE       = "ticket-platform"
-    DEPLOYMENT_NAME = "frontend-ithaka"
-    CONTAINER_NAME  = "frontend-ithaka"
+    DEPLOYMENT_NAME = "ithaka-frontend"
+    CONTAINER_NAME  = "ithaka-frontend"
   }
 
   triggers {
