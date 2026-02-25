@@ -29,6 +29,13 @@ spec:
     command:
     - cat
     tty: true
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
   volumes:
   - name: docker-graph-storage
     emptyDir: {}
