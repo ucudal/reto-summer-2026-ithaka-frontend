@@ -78,6 +78,32 @@ export const useProyectosStore = () => {
     [dispatch],
   );
 
+  const updateProyectoEstado = useCallback(
+    async (id: number | string, nombreEstado: string) => {
+      try {
+        const idCaso = String(id).trim();
+        console.log("Updating proyecto estado:", { idCaso, nombreEstado });
+        await ithakaApi.put(`/casos/${idCaso}/cambiar_estado`, null, {
+          params: {
+            nombre_estado: nombreEstado,
+            tipo_caso: "proyecto",
+          },
+        });
+      } catch (err) {
+        let message = "Error al cambiar el estado del proyecto";
+        if (axios.isAxiosError(err)) {
+          message =
+            err.response?.data?.detail ??
+            err.response?.data?.message ??
+            message;
+        }
+        dispatch(onProyectoError(message));
+        throw err;
+      }
+    },
+    [dispatch],
+  );
+
   const resetProyecto = useCallback(() => {
     dispatch(clearSelectedProyecto());
   }, [dispatch]);
@@ -89,6 +115,7 @@ export const useProyectosStore = () => {
     errorMessage,
     fetchProyectos,
     fetchProyecto,
+    updateProyectoEstado,
     setSelectedProyecto,
     resetProyecto,
   };

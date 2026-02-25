@@ -7,7 +7,6 @@ import {
   saveEvaluacion,
   toggleApoyoEstado,
   toggleHito,
-  updateProyectoEstado,
   updateProyectoResponsable,
 } from "@/src/app/actions";
 import { StatusBadge } from "@/src/components/status-badge";
@@ -37,16 +36,10 @@ import {
   TabsTrigger,
 } from "@/src/components/ui/tabs";
 import { Textarea } from "@/src/components/ui/textarea";
-import { useProyectosStore } from "@/src/hooks";
-import type {
-  AuditEntry,
-  EstadoProyecto,
-  Proyecto,
-  TipoApoyo,
-} from "@/src/lib/data";
+import { useEstadosStore, useProyectosStore } from "@/src/hooks";
+import type { AuditEntry, Proyecto, TipoApoyo } from "@/src/lib/data";
 import { RESPONSABLES_ITHAKA } from "@/src/lib/data";
 import {
-  getEstadoProyectoLabel,
   getEtapaLabel,
   getPotencialLabel,
   getTipoApoyoLabel,
@@ -68,7 +61,11 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 export function ProyectoDetail({ id }: { id: string }) {
+  type ProyectoView = Omit<Proyecto, "estado"> & { estado: string };
+
   const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [pendingEstado, setPendingEstado] = useState("");
+  const [savingEstado, setSavingEstado] = useState(false);
   const [newHito, setNewHito] = useState("");
   const [nuevoApoyo, setNuevoApoyo] = useState<TipoApoyo | "">("");
   const [evalForm, setEvalForm] = useState({
@@ -78,24 +75,30 @@ export function ProyectoDetail({ id }: { id: string }) {
     notas: "",
   });
   const { t, lang } = useI18n();
-  const { status, selectedProyecto, errorMessage, fetchProyecto } =
-    useProyectosStore();
+  const {
+    status,
+    selectedProyecto,
+    errorMessage,
+    fetchProyecto,
+    updateProyectoEstado,
+  } = useProyectosStore();
+  const { estadosProyecto, fetchEstados } = useEstadosStore();
 
-  const mapEstadoProyecto = (nombreEstado: string | null): EstadoProyecto => {
-    const normalized = (nombreEstado ?? "").toLowerCase().replace(/\s+/g, "_");
-    if (
-      normalized === "recibida" ||
-      normalized === "en_evaluacion" ||
-      normalized === "proyecto_activo" ||
-      normalized === "incubado" ||
-      normalized === "cerrado"
-    ) {
-      return normalized;
-    }
-    return "recibida";
-  };
+  const estadoOptions = estadosProyecto
+    .map((estado) => {
+      const rawName = String(estado.nombre_estado ?? "").trim();
+      return {
+        value: rawName,
+        label: rawName,
+      };
+    })
+    .filter((estado) => Boolean(estado.value))
+    .filter(
+      (estado, index, array) =>
+        array.findIndex((item) => item.value === estado.value) === index,
+    );
 
-  const mapCasoToProyecto = (caso: Caso): Proyecto => ({
+  const mapCasoToProyecto = (caso: Caso): ProyectoView => ({
     id: String(caso.id_caso),
     postulacionId: String(caso.id_caso),
     nombreProyecto: caso.nombre_caso,
@@ -103,13 +106,16 @@ export function ProyectoDetail({ id }: { id: string }) {
     email: "-",
     tipoPostulante: "externo",
     descripcion: caso.descripcion ?? "-",
-    estado: mapEstadoProyecto(caso.nombre_estado ?? null),
-    responsableIthaka: caso.tutor ?? "",
+    estado: String(caso.nombre_estado ?? "").trim(),
+    responsableIthaka: caso.tutor ?? "Sin asignar",
     apoyos: [],
     hitos: [],
+    evaluacion: undefined,
     creadoEn: caso.fecha_creacion,
     actualizadoEn: caso.fecha_creacion,
   });
+
+  console.log("current caso: ", selectedProyecto);
 
   const isSelectedForCurrentId =
     selectedProyecto && String(selectedProyecto.id_caso) === String(id);
@@ -127,6 +133,16 @@ export function ProyectoDetail({ id }: { id: string }) {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    fetchEstados();
+  }, [fetchEstados]);
+
+  useEffect(() => {
+    if (proyecto?.estado) {
+      setPendingEstado(proyecto.estado);
+    }
+  }, [proyecto?.estado]);
+
   if (status === "loading" || !proyecto) {
     return (
       <div className="p-6 lg:p-8">
@@ -137,9 +153,20 @@ export function ProyectoDetail({ id }: { id: string }) {
     );
   }
 
-  async function handleEstadoChange(estado: EstadoProyecto) {
-    await updateProyectoEstado(id, estado);
-    loadData();
+  function handleEstadoChange(estado: string) {
+    if (!estado) return;
+    setPendingEstado(estado);
+  }
+
+  async function handleGuardarCambios() {
+    if (!pendingEstado || pendingEstado === proyecto?.estado) return;
+    try {
+      setSavingEstado(true);
+      await updateProyectoEstado(id, pendingEstado);
+      await loadData();
+    } finally {
+      setSavingEstado(false);
+    }
   }
 
   async function handleResponsableChange(responsable: string) {
@@ -217,6 +244,16 @@ export function ProyectoDetail({ id }: { id: string }) {
               {proyecto.postulacionId}
             </p>
           </div>
+          <Button
+            onClick={handleGuardarCambios}
+            disabled={
+              savingEstado ||
+              !pendingEstado ||
+              pendingEstado === proyecto.estado
+            }
+          >
+            {savingEstado ? t("common.loading") : "Guardar cambios"}
+          </Button>
         </div>
       </div>
 
@@ -309,24 +346,16 @@ export function ProyectoDetail({ id }: { id: string }) {
               </CardHeader>
               <CardContent>
                 <Select
-                  value={proyecto.estado}
-                  onValueChange={(v) => handleEstadoChange(v as EstadoProyecto)}
+                  value={pendingEstado || proyecto.estado}
+                  onValueChange={handleEstadoChange}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger disabled={estadoOptions.length === 0}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(
-                      [
-                        "recibida",
-                        "en_evaluacion",
-                        "proyecto_activo",
-                        "incubado",
-                        "cerrado",
-                      ] as const
-                    ).map((key) => (
-                      <SelectItem key={key} value={key}>
-                        {getEstadoProyectoLabel(lang, key)}
+                    {estadoOptions.map((estado) => (
+                      <SelectItem key={estado.value} value={estado.value}>
+                        {estado.label}
                       </SelectItem>
                     ))}
                   </SelectContent>

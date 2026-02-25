@@ -14,4 +14,5 @@ export interface Caso {
   fecha_creacion: string
   emprendedor?: string | "-" 
   tutor?: string | "-"
+  id_tutor?: number | null
 }
