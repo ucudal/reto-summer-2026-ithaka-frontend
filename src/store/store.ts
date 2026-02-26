@@ -1,11 +1,15 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { authSlice } from ".";
-//aca metemos los slice cuando tengamos
+import { authSlice } from "./auth/authSlice";
+import { estadosSlice } from "./estados/estadosSlice";
+import { postulacionesSlice } from "./postulaciones/postulacionesSlice";
+import { proyectosSlice } from "./proyectos/proyectosSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authSlice.reducer,
-    //aca van los reducers de los slices, por ahora esta este de auth nomas
+    estados: estadosSlice.reducer,
+    postulaciones: postulacionesSlice.reducer,
+    proyectos: proyectosSlice.reducer,
   },
 });
 
