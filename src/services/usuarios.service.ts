@@ -49,7 +49,7 @@ function transformBackendToFrontend(backendUser: UsuarioBackendResponse): Usuari
     nombre: backendUser.nombre + (backendUser.apellido ? ` ${backendUser.apellido}` : ""),
     email: backendUser.email,
     rol: idRolToRol[backendUser.id_rol] || "operador",
-    comunidad: "externo",
+    comunidad: "externo" as any,
     estado: backendUser.activo ? "activo" : "inactivo",
     fotoPerfil: "",
     ultimoAcceso: new Date().toISOString(),
@@ -59,6 +59,16 @@ function transformBackendToFrontend(backendUser: UsuarioBackendResponse): Usuari
 }
 
 export const usuariosService = {
+  async getRoles() {
+    try {
+      const { data } = await ithakaApi.get<Array<{ id_rol: number; nombre_rol: string }>>("/api/v1/roles/")
+      return data
+    } catch (error) {
+      console.error("Error trayendo roles:", error)
+      throw error
+    }
+  },
+
   async getAll(): Promise<Usuario[]> {
     try {
       const { data } = await ithakaApi.get<UsuarioBackendResponse[]>("/api/v1/usuarios/")
