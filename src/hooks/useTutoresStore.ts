@@ -1,16 +1,9 @@
 "use client";
 
 import { tutoresService } from "@/src/services/tutores.service";
-import { useCallback, useState } from "react";
 import axios from "axios";
+import { useCallback, useState } from "react";
 import { Tutor } from "../types/tutor";
-
-const normalizeRol = (rol: string) =>
-  String(rol ?? "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
 
 export const useTutoresStore = () => {
   const [tutores, setTutores] = useState<Tutor[]>([]);
@@ -19,32 +12,46 @@ export const useTutoresStore = () => {
   const fetchTutores = useCallback(async () => {
     setLoading(true);
     try {
-        const allUsuarios = await tutoresService.getAllUsuarios();
-        console.log("Todos los usuarios:", allUsuarios); 
-        const filtrados = allUsuarios.filter(
-        (u) => u.id_rol === 3
-        );
-        
-        console.log("Filtrados:", filtrados);
-        setTutores(filtrados);
-        return filtrados;
+      const allUsuarios = await tutoresService.getAllUsuarios();
+      console.log("Todos los usuarios:", allUsuarios);
+      const filtrados = allUsuarios.filter((u) => u.id_rol === 3);
+
+      console.log("Filtrados:", filtrados);
+      setTutores(filtrados);
+      return filtrados;
     } catch (err) {
-        console.error("Error al cargar tutores:", err);
-        throw err;
+      console.error("Error al cargar tutores:", err);
+      throw err;
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-    }, []);
+  }, []);
 
   const updateResponsable = useCallback(
-    async (id_caso: string | number, id_tutor: string | number, nombre_tutor: string) => {
+    async (
+      id_caso: string | number,
+      id_tutor: string | number,
+      asignacionId?: number | null,
+    ) => {
       setLoading(true);
       try {
-        const payload = {
-          id_tutor: id_tutor === "sin_asignar" ? null : Number(id_tutor),
-          tutor: nombre_tutor
-        };
-        const data = await tutoresService.updateResponsable(id_caso, payload);
+        const idUsuario = id_tutor === "sin_asignar" ? null : Number(id_tutor);
+        const casoId = Number(id_caso);
+
+        if (!Number.isFinite(casoId)) {
+          throw new Error("ID de caso inválido");
+        }
+
+        const data =
+          typeof asignacionId === "number" && Number.isFinite(asignacionId)
+            ? await tutoresService.updateAsignacion(asignacionId, {
+                id_usuario: idUsuario,
+              })
+            : await tutoresService.createAsignacion({
+                id_caso: casoId,
+                id_usuario: idUsuario,
+              });
+
         return data;
       } catch (err) {
         let message = "Error al actualizar responsable";
@@ -56,7 +63,7 @@ export const useTutoresStore = () => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   return {

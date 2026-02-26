@@ -188,11 +188,7 @@ export function ProyectosList() {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm">
-                        {p.tutor || (
-                          <span className="text-muted-foreground italic">
-                            {t("proyectos.sinAsignar")}
-                          </span>
-                        )}
+                        {p.tutor_nombre}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">

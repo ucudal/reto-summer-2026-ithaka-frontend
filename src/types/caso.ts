@@ -16,4 +16,5 @@ export interface Caso {
   tutor_nombre?: string; 
   tutor?: string;         
   id_tutor?: number | null
+  asignacion?: number | null
 }

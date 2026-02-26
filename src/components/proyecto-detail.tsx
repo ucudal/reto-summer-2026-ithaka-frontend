@@ -7,7 +7,6 @@ import {
   saveEvaluacion,
   toggleApoyoEstado,
   toggleHito,
-  updateProyectoResponsable,
 } from "@/src/app/actions";
 import { StatusBadge } from "@/src/components/status-badge";
 import { Badge } from "@/src/components/ui/badge";
@@ -59,19 +58,18 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { useTutoresStore } from "../hooks/useTutoresStore";
 import { toast } from "../hooks/use-toast";
+import { useTutoresStore } from "../hooks/useTutoresStore";
 
 export function ProyectoDetail({ id }: { id: string }) {
-  type ProyectoView =
-    Omit<Proyecto, "estado"> &
-    {
-      estado: string;
-      responsableId?: string; 
-    };
+  type ProyectoView = Omit<Proyecto, "estado"> & {
+    estado: string;
+    responsableId?: string;
+    asignacionId?: number | null;
+  };
 
   const { updateResponsable, fetchTutores, tutores } = useTutoresStore();
-  const [responsableSeleccionado, setResponsableSeleccionado] = useState("")
+  const [responsableSeleccionado, setResponsableSeleccionado] = useState("");
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [pendingEstado, setPendingEstado] = useState("");
   const [savingEstado, setSavingEstado] = useState(false);
@@ -117,12 +115,15 @@ export function ProyectoDetail({ id }: { id: string }) {
     tipoPostulante: "externo",
     descripcion: caso.descripcion ?? "-",
     estado: String(caso.nombre_estado ?? "").trim(),
-    responsableIthaka: caso.tutor_nombre && caso.tutor_nombre !== "Sin asignar"  
-        ? caso.tutor_nombre 
+    responsableIthaka:
+      caso.tutor_nombre && caso.tutor_nombre !== "Sin asignar"
+        ? caso.tutor_nombre
         : "Sin asignar",
-    responsableId: (caso.id_tutor && typeof caso.id_tutor === 'number')
-      ? String(caso.id_tutor)
-      : "sin_asignar",                                                        
+    responsableId:
+      caso.id_tutor && typeof caso.id_tutor === "number"
+        ? String(caso.id_tutor)
+        : "sin_asignar",
+    asignacionId: typeof caso.asignacion === "number" ? caso.asignacion : null,
     apoyos: [],
     hitos: [],
     evaluacion: undefined,
@@ -145,11 +146,10 @@ export function ProyectoDetail({ id }: { id: string }) {
   }, [id, fetchProyecto]);
 
   useEffect(() => {
-  fetchTutores();
-}, [fetchTutores]);
+    fetchTutores();
+  }, [fetchTutores]);
 
-
-useEffect(() => {
+  useEffect(() => {
     if (proyecto) {
       setResponsableSeleccionado(
         proyecto.responsableId && proyecto.responsableId !== ""
@@ -189,11 +189,19 @@ useEffect(() => {
   }
 
   async function handleGuardarCambios() {
-    console.log("Guardando - responsableSeleccionado:", responsableSeleccionado);
-    console.log("Guardando - willChangeResponsable:", responsableSeleccionado !== proyecto?.responsableId);
-  
-    const willChangeEstado = pendingEstado && pendingEstado !== proyecto?.estado;
-    const willChangeResponsable = responsableSeleccionado !== proyecto?.responsableId;
+    console.log(
+      "Guardando - responsableSeleccionado:",
+      responsableSeleccionado,
+    );
+    console.log(
+      "Guardando - willChangeResponsable:",
+      responsableSeleccionado !== proyecto?.responsableId,
+    );
+
+    const willChangeEstado =
+      pendingEstado && pendingEstado !== proyecto?.estado;
+    const willChangeResponsable =
+      responsableSeleccionado !== proyecto?.responsableId;
 
     if (!willChangeEstado && !willChangeResponsable) return;
 
@@ -209,10 +217,10 @@ useEffect(() => {
 
       // Pequeño delay para que el backend procese antes de refrescar
       await new Promise((resolve) => setTimeout(resolve, 300));
-      
-      await fetchProyectos();   // refresca la lista
-      await fetchProyecto(id);  // refresca el detalle
-      await loadData();         // refresca auditoría
+
+      await fetchProyectos(); // refresca la lista
+      await fetchProyecto(id); // refresca el detalle
+      await loadData(); // refresca auditoría
 
       toast({ title: "Cambios guardados" });
     } catch (error) {
@@ -224,24 +232,16 @@ useEffect(() => {
   }
 
   async function saveResponsableChange(newResponsableId: string) {
-    console.log("saveResponsableChange llamado con:", newResponsableId);
-    const tutorObj = tutores.find(
-      (t) => String(t.id_usuario) === String(newResponsableId)
-    );
-    console.log("tutorObj encontrado:", tutorObj);
-    const nombreCompleto = tutorObj
-      ? `${tutorObj.nombre} ${tutorObj.apellido}`
-      : "Sin asignar";
-
     try {
-      const result = await updateResponsable(id, newResponsableId, nombreCompleto);
-      console.log("Resultado de updateResponsable:", result); // ← agregar
+      await updateResponsable(
+        id,
+        newResponsableId,
+        proyecto?.asignacionId ?? null,
+      );
     } catch (error) {
-      console.log("Error en updateResponsable:", error); // ← agregar
       throw error;
     }
   }
-
 
   async function handleAddApoyo() {
     if (!nuevoApoyo) return;
@@ -317,11 +317,8 @@ useEffect(() => {
             onClick={handleGuardarCambios}
             disabled={
               savingEstado ||
-              
-              (
-                (!pendingEstado || pendingEstado === proyecto.estado) &&
-                responsableSeleccionado === proyecto.responsableId
-              )
+              ((!pendingEstado || pendingEstado === proyecto.estado) &&
+                responsableSeleccionado === proyecto.responsableId)
             }
           >
             {savingEstado ? t("common.loading") : "Guardar cambios"}
@@ -449,7 +446,6 @@ useEffect(() => {
                   value={responsableSeleccionado || "sin_asignar"}
                   onValueChange={(v) => {
                     setResponsableSeleccionado(v);
-                    
                   }}
                 >
                   <SelectTrigger>
@@ -461,13 +457,14 @@ useEffect(() => {
                     <SelectItem value="sin_asignar">
                       {t("proyectoDetail.sinAsignar")}
                     </SelectItem>
-                    {
-                      tutores.map((tutor) => (
-                        <SelectItem key={tutor.id_usuario} value={String(tutor.id_usuario)}>
-                          {tutor.nombre + " " + tutor.apellido}
-                        </SelectItem>
-                      ))
-                    }
+                    {tutores.map((tutor) => (
+                      <SelectItem
+                        key={tutor.id_usuario}
+                        value={String(tutor.id_usuario)}
+                      >
+                        {tutor.nombre + " " + tutor.apellido}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </CardContent>
