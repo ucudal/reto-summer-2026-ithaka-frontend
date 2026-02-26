@@ -22,10 +22,22 @@ import {
 import {
   getEstadoProyectoLabel,
   getTipoPostulanteLabel,
+  LOCALE_BY_LANG,
   useI18n,
 } from "@/src/lib/i18n";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/src/components/ui/alert-dialog";
 import { useProyectosStore } from "@/src/hooks";
-import { Eye, Search } from "lucide-react";
+import { Download, Eye, Search } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -46,6 +58,44 @@ export function ProyectosList() {
     fetchProyectos();
   }, [fetchProyectos]);
 
+  function formatDate(dateStr: string) {
+    return new Date(dateStr).toLocaleDateString(LOCALE_BY_LANG[lang], {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
+  function exportToCSV() {
+    const headers = [
+      t("postulaciones.id"),
+      t("postulaciones.proyecto"),
+      t("postulaciones.postulante"),
+      t("proyectoDetail.descripcion"),
+      t("postulaciones.estado"),
+      t("proyectos.responsable"),
+      t("postulaciones.fecha"),
+    ];
+    const rows = filtered.map((p) => [
+      p.id_caso,
+      p.nombre_caso,
+      p.emprendedor ?? "",
+      p.descripcion ?? "",
+      getEstadoProyectoLabel(lang, (p.nombre_estado ?? "") as Parameters<typeof getEstadoProyectoLabel>[1]) ?? p.nombre_estado ?? "",
+      p.tutor ?? "",
+      formatDate(p.fecha_creacion),
+    ]);
+    const escape = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+    const csv = [headers, ...rows].map((r) => r.map(escape).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `proyectos_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const filtered = proyectos.filter((p) => {
     const matchSearch =
       p.nombre_caso.toLowerCase().includes(search.toLowerCase()) ||
@@ -60,13 +110,35 @@ export function ProyectosList() {
 
   return (
     <div className="p-6 lg:p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
-          {t("proyectos.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {t("proyectos.subtitle")}
-        </p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            {t("proyectos.title")}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t("proyectos.subtitle")}
+          </p>
+        </div>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" size="sm" disabled={filtered.length === 0}>
+              <Download className="h-4 w-4 mr-2" />
+              {t("proyectos.exportarCSV")}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("proyectos.exportarCSVTitulo")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("proyectos.exportarCSVDescripcion")} {filtered.length} {t("proyectos.exportarCSVRegistros")}.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("common.cancelar")}</AlertDialogCancel>
+              <AlertDialogAction onClick={exportToCSV}>{t("proyectos.exportarCSV")}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Filters */}
