@@ -2,6 +2,8 @@
 // Ithaka Backoffice PoC — In-memory data store
 // =============================================================================
 
+import { ithakaApi } from "../api"
+
 export type TipoPostulante =
   | "estudiante_ucu"
   | "alumni"
@@ -170,6 +172,9 @@ export const COMUNIDAD_LABELS: Record<TipoComunidad, string> = {
   externo: "Externo",
 }
 
+/*
+borrar, ya toma de la base
+
 export const RESPONSABLES_ITHAKA = [
   "Ana Garcia",
   "Carlos Rodriguez",
@@ -177,6 +182,7 @@ export const RESPONSABLES_ITHAKA = [
   "Juan Martinez",
   "Laura Fernandez",
 ]
+*/
 
 // --------------- Seed data ---------------
 
@@ -722,14 +728,41 @@ class IthakaStore {
     }
     return p
   }
-  updateProyectoResponsable(id: string, responsable: string, usuario: string) {
-    const p = this.getProyecto(id)
-    if (p) {
-      p.responsableIthaka = responsable
-      p.actualizadoEn = new Date().toISOString()
-      this.addAudit("proyecto", id, "Responsable asignado", responsable, usuario)
+  async updateProyectoResponsable(id: string, responsable: string, usuario: string, responsableId?: string) {
+    if (typeof window === "undefined"){
+      return;
     }
-    return p
+
+    try {
+      console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+      const rawToken = localStorage.getItem('token') || "";
+      const token = rawToken.replace(/^"|"$/g, ''); 
+
+      const body = {
+        id_tutor: (responsableId && responsableId !== "sin_asignar") ? Number(responsableId) : null,
+        tutor: responsable
+      };
+
+      const { data } = await ithakaApi.put(`/casos/${id}`, body, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Actualizamos el objeto local en el Store para que la UI se entere
+      const p = this.getProyecto(id) as any;
+      if (p) {
+        p.tutor_nombre = responsable;
+        p.id_tutor = body.id_tutor;
+        p.responsableIthaka = responsable; 
+      }
+      
+      return p;
+    } catch (error: any) {
+      console.error("Error al guardar:", error.response?.data || error.message);
+      throw error;
+    }
   }
 
   // --- Apoyos ---

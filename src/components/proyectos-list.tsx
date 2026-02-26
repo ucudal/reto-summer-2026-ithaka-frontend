@@ -97,6 +97,7 @@ export function ProyectosList() {
   }
 
   const filtered = proyectos.filter((p) => {
+    console.log("Evaluando proyecto:", p);
     const matchSearch =
       p.nombre_caso.toLowerCase().includes(search.toLowerCase()) ||
       (p.emprendedor?.toLowerCase() ?? "").includes(search.toLowerCase()) ||
@@ -259,11 +260,7 @@ export function ProyectosList() {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm">
-                        {p.tutor || (
-                          <span className="text-muted-foreground italic">
-                            {t("proyectos.sinAsignar")}
-                          </span>
-                        )}
+                        {p.tutor_nombre}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">

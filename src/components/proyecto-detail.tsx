@@ -7,7 +7,6 @@ import {
   saveEvaluacion,
   toggleApoyoEstado,
   toggleHito,
-  updateProyectoResponsable,
 } from "@/src/app/actions";
 import { StatusBadge } from "@/src/components/status-badge";
 import { Badge } from "@/src/components/ui/badge";
@@ -38,7 +37,7 @@ import {
 import { Textarea } from "@/src/components/ui/textarea";
 import { useEstadosStore, useProyectosStore } from "@/src/hooks";
 import type { AuditEntry, Proyecto, TipoApoyo } from "@/src/lib/data";
-import { RESPONSABLES_ITHAKA } from "@/src/lib/data";
+// import { RESPONSABLES_ITHAKA } from "@/src/lib/data";
 import {
   getEtapaLabel,
   getPotencialLabel,
@@ -59,10 +58,18 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "../hooks/use-toast";
+import { useTutoresStore } from "../hooks/useTutoresStore";
 
 export function ProyectoDetail({ id }: { id: string }) {
-  type ProyectoView = Omit<Proyecto, "estado"> & { estado: string };
+  type ProyectoView = Omit<Proyecto, "estado"> & {
+    estado: string;
+    responsableId?: string;
+    asignacionId?: number | null;
+  };
 
+  const { updateResponsable, fetchTutores, tutores } = useTutoresStore();
+  const [responsableSeleccionado, setResponsableSeleccionado] = useState("");
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [pendingEstado, setPendingEstado] = useState("");
   const [savingEstado, setSavingEstado] = useState(false);
@@ -80,6 +87,7 @@ export function ProyectoDetail({ id }: { id: string }) {
     selectedProyecto,
     errorMessage,
     fetchProyecto,
+    fetchProyectos,
     updateProyectoEstado,
   } = useProyectosStore();
   const { estadosProyecto, fetchEstados } = useEstadosStore();
@@ -107,7 +115,15 @@ export function ProyectoDetail({ id }: { id: string }) {
     tipoPostulante: "externo",
     descripcion: caso.descripcion ?? "-",
     estado: String(caso.nombre_estado ?? "").trim(),
-    responsableIthaka: caso.tutor ?? "Sin asignar",
+    responsableIthaka:
+      caso.tutor_nombre && caso.tutor_nombre !== "Sin asignar"
+        ? caso.tutor_nombre
+        : "Sin asignar",
+    responsableId:
+      caso.id_tutor && typeof caso.id_tutor === "number"
+        ? String(caso.id_tutor)
+        : "sin_asignar",
+    asignacionId: typeof caso.asignacion === "number" ? caso.asignacion : null,
     apoyos: [],
     hitos: [],
     evaluacion: undefined,
@@ -128,6 +144,20 @@ export function ProyectoDetail({ id }: { id: string }) {
     const [a] = await Promise.all([getAuditForEntity(id), fetchProyecto(id)]);
     setAudit(a);
   }, [id, fetchProyecto]);
+
+  useEffect(() => {
+    fetchTutores();
+  }, [fetchTutores]);
+
+  useEffect(() => {
+    if (proyecto) {
+      setResponsableSeleccionado(
+        proyecto.responsableId && proyecto.responsableId !== ""
+          ? proyecto.responsableId
+          : "sin_asignar",
+      );
+    }
+  }, [proyecto?.responsableId]);
 
   useEffect(() => {
     loadData();
@@ -159,19 +189,58 @@ export function ProyectoDetail({ id }: { id: string }) {
   }
 
   async function handleGuardarCambios() {
-    if (!pendingEstado || pendingEstado === proyecto?.estado) return;
+    console.log(
+      "Guardando - responsableSeleccionado:",
+      responsableSeleccionado,
+    );
+    console.log(
+      "Guardando - willChangeResponsable:",
+      responsableSeleccionado !== proyecto?.responsableId,
+    );
+
+    const willChangeEstado =
+      pendingEstado && pendingEstado !== proyecto?.estado;
+    const willChangeResponsable =
+      responsableSeleccionado !== proyecto?.responsableId;
+
+    if (!willChangeEstado && !willChangeResponsable) return;
+
     try {
       setSavingEstado(true);
-      await updateProyectoEstado(id, pendingEstado);
-      await loadData();
+
+      if (willChangeEstado) {
+        await updateProyectoEstado(id, pendingEstado);
+      }
+      if (willChangeResponsable) {
+        await saveResponsableChange(responsableSeleccionado);
+      }
+
+      // Pequeño delay para que el backend procese antes de refrescar
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      await fetchProyectos(); // refresca la lista
+      await fetchProyecto(id); // refresca el detalle
+      await loadData(); // refresca auditoría
+
+      toast({ title: "Cambios guardados" });
+    } catch (error) {
+      console.error("Error al guardar los cambios:", error);
+      toast({ title: "Error al guardar", variant: "destructive" });
     } finally {
       setSavingEstado(false);
     }
   }
 
-  async function handleResponsableChange(responsable: string) {
-    await updateProyectoResponsable(id, responsable);
-    loadData();
+  async function saveResponsableChange(newResponsableId: string) {
+    try {
+      await updateResponsable(
+        id,
+        newResponsableId,
+        proyecto?.asignacionId ?? null,
+      );
+    } catch (error) {
+      throw error;
+    }
   }
 
   async function handleAddApoyo() {
@@ -248,8 +317,8 @@ export function ProyectoDetail({ id }: { id: string }) {
             onClick={handleGuardarCambios}
             disabled={
               savingEstado ||
-              !pendingEstado ||
-              pendingEstado === proyecto.estado
+              ((!pendingEstado || pendingEstado === proyecto.estado) &&
+                responsableSeleccionado === proyecto.responsableId)
             }
           >
             {savingEstado ? t("common.loading") : "Guardar cambios"}
@@ -374,10 +443,10 @@ export function ProyectoDetail({ id }: { id: string }) {
               </CardHeader>
               <CardContent>
                 <Select
-                  value={proyecto.responsableIthaka || "sin_asignar"}
-                  onValueChange={(v) =>
-                    handleResponsableChange(v === "sin_asignar" ? "" : v)
-                  }
+                  value={responsableSeleccionado || "sin_asignar"}
+                  onValueChange={(v) => {
+                    setResponsableSeleccionado(v);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue
@@ -388,9 +457,12 @@ export function ProyectoDetail({ id }: { id: string }) {
                     <SelectItem value="sin_asignar">
                       {t("proyectoDetail.sinAsignar")}
                     </SelectItem>
-                    {RESPONSABLES_ITHAKA.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
+                    {tutores.map((tutor) => (
+                      <SelectItem
+                        key={tutor.id_usuario}
+                        value={String(tutor.id_usuario)}
+                      >
+                        {tutor.nombre + " " + tutor.apellido}
                       </SelectItem>
                     ))}
                   </SelectContent>

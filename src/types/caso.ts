@@ -13,6 +13,8 @@ export interface Caso {
   nombre_convocatoria?: string | null
   fecha_creacion: string
   emprendedor?: string | "-" 
-  tutor?: string | "-"
+  tutor_nombre?: string; 
+  tutor?: string;         
   id_tutor?: number | null
+  asignacion?: number | null
 }
