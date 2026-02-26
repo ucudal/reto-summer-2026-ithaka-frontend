@@ -1,9 +1,8 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-import { getProyectos } from "@/src/app/actions"
-import type { Proyecto } from "@/src/lib/data"
-import { StatusBadge } from "@/src/components/status-badge"
+import { useEffect } from "react"
+import { useEvaluacionesStore } from "@/src/hooks/useEvaluacionesStore"
+import type { Caso } from "@/src/types/caso"
 import { Card, CardContent } from "@/src/components/ui/card"
 import { Badge } from "@/src/components/ui/badge"
 import {
@@ -15,31 +14,38 @@ import {
   TableRow,
 } from "@/src/components/ui/table"
 import { Button } from "@/src/components/ui/button"
-import { ClipboardCheck, ArrowRight, CheckCircle2, AlertCircle } from "lucide-react"
+import { ClipboardCheck, ArrowRight, CheckCircle2, AlertCircle, FolderOpen } from "lucide-react"
 import Link from "next/link"
-import { useI18n, getPotencialLabel, getEtapaLabel } from "@/src/lib/i18n"
+import { useI18n } from "@/src/lib/i18n"
 
-const potencialColors: Record<string, string> = {
-  alto: "bg-success/10 text-success border-success/20",
-  medio: "bg-warning/10 text-warning border-warning/20",
-  bajo: "bg-destructive/10 text-destructive border-destructive/20",
+const estadoStyles: Record<string, string> = {
+  "En programa": "bg-primary/10 text-primary border-primary/20",
+  "Activo": "bg-success/10 text-success border-success/20",
+  "Finalizado": "bg-muted text-muted-foreground border-border",
 }
 
 export function EvaluacionesList() {
-  const [proyectos, setProyectos] = useState<Proyecto[]>([])
-  const { t, lang } = useI18n()
-
-  const loadData = useCallback(async () => {
-    const data = await getProyectos()
-    setProyectos(data)
-  }, [])
+  const { status, pendientes, proyectos, fetchEvaluaciones } = useEvaluacionesStore()
+  const { t } = useI18n()
 
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    fetchEvaluaciones()
+  }, [fetchEvaluaciones])
 
-  const withEval = proyectos.filter((p) => p.evaluacion)
-  const withoutEval = proyectos.filter((p) => !p.evaluacion)
+  const activos = proyectos.filter(
+    (p) => (p.nombre_estado ?? "").toLowerCase() === "activo"
+  )
+  const finalizados = proyectos.filter(
+    (p) => (p.nombre_estado ?? "").toLowerCase() === "finalizado"
+  )
+
+  if (status === "loading") {
+    return (
+      <div className="p-6 lg:p-8 flex items-center justify-center">
+        <p className="text-muted-foreground">{t("common.loading")}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6 lg:p-8">
@@ -55,25 +61,12 @@ export function EvaluacionesList() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-success/10 p-2">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t("evaluaciones.evaluados")}</p>
-                <p className="text-xl font-bold">{withEval.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
               <div className="rounded-lg bg-warning/10 p-2">
                 <AlertCircle className="h-4 w-4 text-warning" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">{t("evaluaciones.pendientes")}</p>
-                <p className="text-xl font-bold">{withoutEval.length}</p>
+                <p className="text-xl font-bold">{pendientes.length}</p>
               </div>
             </div>
           </CardContent>
@@ -82,17 +75,24 @@ export function EvaluacionesList() {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-primary/10 p-2">
-                <ClipboardCheck className="h-4 w-4 text-primary" />
+                <FolderOpen className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">{t("evaluaciones.potencialAlto")}</p>
-                <p className="text-xl font-bold">
-                  {
-                    withEval.filter(
-                      (p) => p.evaluacion?.potencialIncubacion === "alto"
-                    ).length
-                  }
-                </p>
+                <p className="text-xs text-muted-foreground">{t("evaluaciones.totalProyectos")}</p>
+                <p className="text-xl font-bold">{proyectos.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-success/10 p-2">
+                <CheckCircle2 className="h-4 w-4 text-success" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">{t("evaluaciones.activos")}</p>
+                <p className="text-xl font-bold">{activos.length}</p>
               </div>
             </div>
           </CardContent>
@@ -104,15 +104,8 @@ export function EvaluacionesList() {
                 <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">
-                  {t("evaluaciones.comunidadUcu")}
-                </p>
-                <p className="text-xl font-bold">
-                  {
-                    withEval.filter((p) => p.evaluacion?.pertenenciaUCU)
-                      .length
-                  }
-                </p>
+                <p className="text-xs text-muted-foreground">{t("evaluaciones.finalizados")}</p>
+                <p className="text-xl font-bold">{finalizados.length}</p>
               </div>
             </div>
           </CardContent>
@@ -120,28 +113,40 @@ export function EvaluacionesList() {
       </div>
 
       {/* Pending evaluations */}
-      {withoutEval.length > 0 && (
+      {pendientes.length > 0 && (
         <Card className="mb-6">
           <CardContent className="p-4">
             <h2 className="text-sm font-semibold text-foreground mb-3">
               {t("evaluaciones.pendientesTitulo")}
             </h2>
             <div className="space-y-2">
-              {withoutEval.map((p) => (
+              {pendientes.map((p: Caso) => (
                 <div
-                  key={p.id}
+                  key={p.id_caso}
                   className="flex items-center justify-between rounded-lg border p-3"
                 >
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-xs text-muted-foreground">
-                      {p.id}
+                      #{p.id_caso}
                     </span>
                     <span className="text-sm font-medium">
-                      {p.nombreProyecto}
+                      {p.nombre_caso}
                     </span>
-                    <StatusBadge status={p.estado} />
+                    {p.nombre_estado && (
+                      <Badge
+                        variant="outline"
+                        className="text-xs bg-warning/10 text-warning border-warning/20"
+                      >
+                        {p.nombre_estado}
+                      </Badge>
+                    )}
+                    {p.emprendedor && p.emprendedor !== "-" && (
+                      <span className="text-xs text-muted-foreground hidden sm:inline">
+                        {p.emprendedor}
+                      </span>
+                    )}
                   </div>
-                  <Link href={`/proyectos/${p.id}`}>
+                  <Link href={`/postulaciones/${p.id_caso}`}>
                     <Button size="sm" variant="outline">
                       {t("evaluaciones.evaluar")}
                       <ArrowRight className="h-3 w-3 ml-1" />
@@ -154,7 +159,6 @@ export function EvaluacionesList() {
         </Card>
       )}
 
-      {/* Evaluated projects table */}
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -162,14 +166,14 @@ export function EvaluacionesList() {
               <TableRow>
                 <TableHead>{t("evaluaciones.proyecto")}</TableHead>
                 <TableHead>{t("evaluaciones.estado")}</TableHead>
-                <TableHead>{t("evaluaciones.etapa")}</TableHead>
-                <TableHead>{t("evaluaciones.potencial")}</TableHead>
-                <TableHead>{t("evaluaciones.comunidadUcu")}</TableHead>
+                <TableHead>{t("evaluaciones.emprendedor")}</TableHead>
+                <TableHead>{t("evaluaciones.tutor")}</TableHead>
+                <TableHead>{t("evaluaciones.fecha")}</TableHead>
                 <TableHead className="text-right">{t("evaluaciones.acciones")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {withEval.length === 0 ? (
+              {proyectos.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8">
                     <p className="text-muted-foreground">
@@ -178,50 +182,46 @@ export function EvaluacionesList() {
                   </TableCell>
                 </TableRow>
               ) : (
-                withEval.map((p) => (
-                  <TableRow key={p.id}>
+                proyectos.map((p: Caso) => (
+                  <TableRow key={p.id_caso}>
                     <TableCell>
                       <div>
                         <span className="font-medium text-sm">
-                          {p.nombreProyecto}
+                          {p.nombre_caso}
                         </span>
                         <br />
-                        <span className="text-xs text-muted-foreground">
-                          {p.id}
+                        <span className="text-xs text-muted-foreground font-mono">
+                          #{p.id_caso}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={p.estado} />
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">
-                        {p.evaluacion?.etapaEmprendimiento
-                          ? getEtapaLabel(lang, p.evaluacion.etapaEmprendimiento as any)
-                          : "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
                       <Badge
                         variant="outline"
-                        className={
-                          potencialColors[
-                            p.evaluacion?.potencialIncubacion || ""
-                          ] || ""
-                        }
+                        className={`text-xs font-medium ${estadoStyles[p.nombre_estado ?? ""] ?? "bg-muted text-muted-foreground"}`}
                       >
-                        {p.evaluacion?.potencialIncubacion
-                          ? getPotencialLabel(lang, p.evaluacion.potencialIncubacion)
-                          : "-"}
+                        {p.nombre_estado ?? "-"}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <span className="text-sm">
-                        {p.evaluacion?.pertenenciaUCU ? t("common.si") : t("common.no")}
+                        {p.emprendedor && p.emprendedor !== "-" ? p.emprendedor : "-"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm">
+                        {p.tutor && p.tutor !== "-" ? p.tutor : "-"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {p.fecha_creacion
+                          ? new Date(p.fecha_creacion).toLocaleDateString()
+                          : "-"}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/proyectos/${p.id}`}>
+                      <Link href={`/proyectos/${p.id_caso}`}>
                         <Button size="sm" variant="outline">
                           {t("evaluaciones.verDetalle")}
                         </Button>
