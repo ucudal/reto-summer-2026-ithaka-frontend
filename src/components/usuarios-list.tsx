@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-import { store } from "@/src/lib/data"
-import type { Usuario, Rol, EstadoUsuario, TipoComunidad } from "@/src/lib/data"
-import { ROL_LABELS, COMUNIDAD_LABELS } from "@/src/lib/data"
+import { useEffect, useState } from "react"
+import { usuariosService } from "@/src/services/usuarios.service"
+import type { Usuario, Rol, EstadoUsuario } from "@/src/lib/data"
+import { ROL_LABELS } from "@/src/lib/data"
 import { StatusBadge } from "@/src/components/status-badge"
 import { Card, CardContent } from "@/src/components/ui/card"
 import { Input } from "@/src/components/ui/input"
@@ -39,49 +39,73 @@ export function UsuariosList() {
     const [search, setSearch] = useState("")
     const [filterRol, setFilterRol] = useState<string>("all")
     const [filterEstado, setFilterEstado] = useState<string>("all")
-    const [filterComunidad, setFilterComunidad] = useState<string>("all")
     const [editDialog, setEditDialog] = useState<Usuario | null>(null)
-    const [deleteDialog, setDeleteDialog] = useState<Usuario | null>(null)
+    const [editConfirmDialog, setEditConfirmDialog] = useState<{ open: boolean; accion: "activar" | "desactivar" }>({ open: false, accion: "desactivar" })
+    const [roles, setRoles] = useState<Array<{ id_rol: number; nombre_rol: string }>>([])
     const [newUserDialog, setNewUserDialog] = useState(false)
     const [loading, setLoading] = useState(false)
     const [editingUser, setEditingUser] = useState<Usuario | null>(null)
     const [newUser, setNewUser] = useState({
         nombre: "",
         email: "",
+        password: "",
         rol: "" as unknown as Rol,
-        comunidad: "" as unknown as TipoComunidad,
         estado: "activo" as EstadoUsuario,
     })
     const [formErrors, setFormErrors] = useState({
         nombre: "",
         email: "",
+        password: "",
     })
     const [touchedFields, setTouchedFields] = useState({
         nombre: false,
         email: false,
+        password: false,
     })
 
-    const loadData = useCallback(() => {
-        const data = store.getUsuarios()
-        setUsuarios(data)
-    }, [])
+    const loadData = async () => {
+        try {
+            setLoading(true)
+            const data = await usuariosService.getAll()
+            setUsuarios(data)
+        } catch (error) {
+            console.error("Error cargando usuarios:", error)
+        } finally {
+            setLoading(false)
+        }
+    }
 
-    const resetNewUserForm = useCallback(() => {
+    const resetNewUserForm = () => {
         setNewUserDialog(false)
-        setFormErrors({ nombre: "", email: "" })
-        setTouchedFields({ nombre: false, email: false })
+        setFormErrors({ nombre: "", email: "", password: "" })
+        setTouchedFields({ nombre: false, email: false, password: false })
         setNewUser({
             nombre: "",
             email: "",
+            password: "",
             rol: "" as unknown as Rol,
-            comunidad: "" as unknown as TipoComunidad,
             estado: "activo" as EstadoUsuario,
         })
-    }, [])
+    }
 
     useEffect(() => {
-        loadData()
-    }, [loadData])
+        const fetchData = async () => {
+            try {
+                setLoading(true)
+                const [usuariosData, rolesData] = await Promise.all([
+                    usuariosService.getAll(),
+                    usuariosService.getRoles()
+                ])
+                setUsuarios(usuariosData)
+                setRoles(rolesData)
+            } catch (error) {
+                console.error("Error:", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchData()
+    }, [])
 
     const filtered = usuarios.filter((u) => {
         const matchSearch =
@@ -89,8 +113,7 @@ export function UsuariosList() {
             u.email.toLowerCase().includes(search.toLowerCase())
         const matchRol = filterRol === "all" || u.rol === filterRol
         const matchEstado = filterEstado === "all" || u.estado === filterEstado
-        const matchComunidad = filterComunidad === "all" || u.comunidad === filterComunidad
-        return matchSearch && matchRol && matchEstado && matchComunidad
+        return matchSearch && matchRol && matchEstado
     })
 
     const stats = {
@@ -105,15 +128,7 @@ export function UsuariosList() {
         }).length,
     }
 
-    function deleteUsuario() {
-        if (!deleteDialog) return
-        setLoading(true)
-        store.deleteUsuario(deleteDialog.id)
-        const data = store.getUsuarios()
-        setUsuarios([...data])
-        setDeleteDialog(null)
-        setLoading(false)
-    }
+
 
     function isValidEmail(email: string): boolean {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -158,8 +173,24 @@ export function UsuariosList() {
         setFormErrors({ ...formErrors, email: error })
     }
 
+    function validatePassword(password: string) {
+        if (!password.trim()) {
+            return "La contraseña es requerida"
+        }
+        if (password.length < 8) {
+            return "La contraseña debe tener al menos 8 caracteres"
+        }
+        return ""
+    }
+
+    function handlePasswordBlur() {
+        setTouchedFields({ ...touchedFields, password: true })
+        const error = validatePassword(newUser.password)
+        setFormErrors({ ...formErrors, password: error })
+    }
+
     function validateAndSetErrors() {
-        const errors = { nombre: "", email: "" }
+        const errors = { nombre: "", email: "", password: "" }
         if (!newUser.nombre.trim()) {
             errors.nombre = "El nombre es requerido"
         }
@@ -168,55 +199,90 @@ export function UsuariosList() {
         } else if (!isValidEmail(newUser.email)) {
             errors.email = "El email no es válido"
         }
+        if (!newUser.password.trim()) {
+            errors.password = "La contraseña es requerida"
+        } else if (newUser.password.length < 8) {
+            errors.password = "La contraseña debe tener al menos 8 caracteres"
+        }
         setFormErrors(errors)
         return Object.values(errors).every((err) => err === "")
     }
 
-    function createNewUsuario() {
+    async function createNewUsuario() {
         if (!validateAndSetErrors()) {
             return
         }
         setLoading(true)
-        const initials = newUser.nombre
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .toUpperCase()
-        store.addUsuario({
-            nombre: newUser.nombre,
-            email: newUser.email,
-            rol: newUser.rol,
-            comunidad: newUser.comunidad,
-            estado: "activo",
-            fotoPerfil: `https://ui-avatars.com/api/?name=${initials}&background=354558&color=fff&bold=true`,
-            ultimoAcceso: new Date().toISOString(),
-        })
-        const data = store.getUsuarios()
-        setUsuarios([...data])
-        setNewUserDialog(false)
-        setNewUser({
-            nombre: "",
-            email: "",
-            rol: "tutor",
-            comunidad: "docente_funcionario",
-            estado: "activo",
-        })
-        setLoading(false)
+        try {
+            const initials = newUser.nombre
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+            
+            const user = await usuariosService.create({
+                nombre: newUser.nombre,
+                email: newUser.email,
+                password: newUser.password,
+                rol: newUser.rol,
+                comunidad: "externo" as any,
+                estado: "activo",
+                fotoPerfil: `https://ui-avatars.com/api/?name=${initials}&background=354558&color=fff&bold=true`,
+                actualizadoEn: new Date().toISOString(),
+            })
+            
+            // Recargar la lista
+            await loadData()
+            setNewUserDialog(false)
+            resetNewUserForm()
+        } catch (error) {
+            console.error("Error creando usuario:", error)
+        } finally {
+            setLoading(false)
+        }
     }
 
-    function saveEditingUser() {
+    async function saveEditingUser() {
         if (!editingUser) return
         setLoading(true)
-        store.updateUsuario(editingUser.id, {
-            rol: editingUser.rol,
-            comunidad: editingUser.comunidad,
-            estado: editingUser.estado,
-        })
-        const data = store.getUsuarios()
-        setUsuarios([...data])
-        setEditDialog(null)
-        setEditingUser(null)
-        setLoading(false)
+        try {
+            await usuariosService.update(editingUser.id, {
+                nombre: editingUser.nombre,
+                email: editingUser.email,
+                rol: editingUser.rol,
+            })
+            
+            // Recargar la lista
+            await loadData()
+            setEditDialog(null)
+            setEditingUser(null)
+        } catch (error) {
+            console.error("Error actualizando usuario:", error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    async function confirmarCambioEstado() {
+        if (!editingUser) return
+        setLoading(true)
+        try {
+            if (editConfirmDialog.accion === "desactivar") {
+                await usuariosService.delete(editingUser.id)
+            } else {
+                await usuariosService.reactivate(editingUser.id)
+            }
+            
+            // Recargar la lista
+            await loadData()
+            setEditDialog(null)
+            setEditingUser(null)
+            setEditConfirmDialog({ open: false, accion: "desactivar" })
+        } catch (error) {
+            console.error("Error al cambiar estado del usuario:", error)
+        } finally {
+            setLoading(false)
+        }
     }
 
     function formatDate(dateStr: string) {
@@ -318,21 +384,11 @@ export function UsuariosList() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Todos los roles</SelectItem>
-                                <SelectItem value="admin">Administrador</SelectItem>
-                                <SelectItem value="coordinador">Coordinador</SelectItem>
-                                <SelectItem value="tutor">Tutor</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select value={filterComunidad} onValueChange={setFilterComunidad}>
-                            <SelectTrigger className="w-full sm:w-48">
-                                <SelectValue placeholder="Comunidad" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todas las comunidades</SelectItem>
-                                <SelectItem value="docente_funcionario">Docente/Funcionario UCU</SelectItem>
-                                <SelectItem value="alumni">Alumni</SelectItem>
-                                <SelectItem value="estudiante">Estudiante</SelectItem>
-                                <SelectItem value="externo">Externo</SelectItem>
+                                {roles.map((r) => (
+                                    <SelectItem key={r.id_rol} value={r.nombre_rol.toLowerCase()}>
+                                        {r.nombre_rol}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                         <Select value={filterEstado} onValueChange={setFilterEstado}>
@@ -358,7 +414,6 @@ export function UsuariosList() {
                                 <TableHead>USUARIO</TableHead>
                                 <TableHead>EMAIL</TableHead>
                                 <TableHead>ROL</TableHead>
-                                <TableHead>COMUNIDAD</TableHead>
                                 <TableHead>ESTADO</TableHead>
                                 <TableHead>ÚLTIMO ACCESO</TableHead>
                                 <TableHead className="text-left">ACCIONES</TableHead>
@@ -403,9 +458,6 @@ export function UsuariosList() {
                                                 {ROL_LABELS[u.rol as Rol]}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="text-sm text-muted-foreground">
-                                            {COMUNIDAD_LABELS[u.comunidad as TipoComunidad]}
-                                        </TableCell>
                                         <TableCell>
                                             <StatusBadge status={u.estado} />
                                         </TableCell>
@@ -435,43 +487,19 @@ export function UsuariosList() {
                 </CardContent>
             </Card>
 
-            {/* Delete Dialog */}
-            <Dialog open={!!deleteDialog} onOpenChange={() => setDeleteDialog(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Eliminar usuario</DialogTitle>
-                        <DialogDescription>
-                            ¿Estás seguro de que deseas eliminar a {deleteDialog?.nombre}? Esta acción no se puede deshacer.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteDialog(null)}>
-                            Cancelar
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={deleteUsuario}
-                            disabled={loading}
-                        >
-                            Eliminar
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
             {/* New User Dialog */}
             <Dialog
                 open={newUserDialog}
                 onOpenChange={(open) => {
                     if (!open) {
                         setNewUserDialog(false)
-                        setFormErrors({ nombre: "", email: "" })
-                        setTouchedFields({ nombre: false, email: false })
+                        setFormErrors({ nombre: "", email: "", password: "" })
+                        setTouchedFields({ nombre: false, email: false, password: false })
                         setNewUser({
                             nombre: "",
                             email: "",
+                            password: "",
                             rol: "" as unknown as Rol,
-                            comunidad: "" as unknown as TipoComunidad,
                             estado: "activo",
                         })
                     } else {
@@ -522,29 +550,31 @@ export function UsuariosList() {
                                         />
                                     </div>
                                     <div>
+                                        {touchedFields.password && formErrors.password && (
+                                            <p className="text-xs text-red-500 font-medium mb-1">{formErrors.password}</p>
+                                        )}
+                                        <label className="text-xs font-medium text-muted-foreground mb-2 block">Contraseña</label>
+                                        <Input
+                                            type="password"
+                                            placeholder="Mínimo 8 caracteres"
+                                            value={newUser.password}
+                                            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                            onBlur={handlePasswordBlur}
+                                            className={formErrors.password && touchedFields.password ? "border-red-500" : ""}
+                                        />
+                                    </div>
+                                    <div>
                                         <label className="text-xs font-medium text-muted-foreground mb-2 block">Rol</label>
                                         <Select value={newUser.rol} onValueChange={(value) => setNewUser({ ...newUser, rol: value as Rol })}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Seleccione un rol" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="admin">Administrador</SelectItem>
-                                                <SelectItem value="coordinador">Coordinador</SelectItem>
-                                                <SelectItem value="tutor">Tutor</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-muted-foreground mb-2 block">Comunidad</label>
-                                        <Select value={newUser.comunidad} onValueChange={(value) => setNewUser({ ...newUser, comunidad: value as TipoComunidad })}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione una comunidad" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="docente_funcionario">Docente/Funcionario UCU</SelectItem>
-                                                <SelectItem value="alumni">Alumni</SelectItem>
-                                                <SelectItem value="estudiante">Estudiante</SelectItem>
-                                                <SelectItem value="externo">Externo</SelectItem>
+                                                {roles.map((r) => (
+                                                    <SelectItem key={r.id_rol} value={r.nombre_rol.toLowerCase()}>
+                                                        {r.nombre_rol}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -559,10 +589,46 @@ export function UsuariosList() {
                         </Button>
                         <Button
                             onClick={createNewUsuario}
-                            disabled={loading || !newUser.nombre.trim() || !newUser.email.trim() || !isValidEmail(newUser.email)}
+                            disabled={loading || !newUser.nombre.trim() || !newUser.email.trim() || !isValidEmail(newUser.email) || !newUser.password.trim() || newUser.password.length < 8}
                             className="bg-blue-600 hover:bg-blue-700"
                         >
                             Crear Usuario
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Confirmation Dialog for Edit Modal */}
+            <Dialog open={editConfirmDialog.open} onOpenChange={(open) => {
+                if (!open) {
+                    setEditConfirmDialog({ open: false, accion: "desactivar" })
+                }
+            }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            {editConfirmDialog.accion === "desactivar" ? "Desactivar usuario" : "Activar usuario"}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {editConfirmDialog.accion === "desactivar" 
+                                ? `¿Estás seguro de que deseas desactivar a ${editingUser?.nombre}? El usuario no podrá acceder al sistema.`
+                                : `¿Estás seguro de que deseas activar a ${editingUser?.nombre}? El usuario podrá acceder al sistema nuevamente.`
+                            }
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setEditConfirmDialog({ open: false, accion: "desactivar" })}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            variant={editConfirmDialog.accion === "desactivar" ? "destructive" : "default"}
+                            onClick={confirmarCambioEstado}
+                            disabled={loading}
+                        >
+                            {editConfirmDialog.accion === "desactivar" ? "Desactivar" : "Activar"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -640,29 +706,11 @@ export function UsuariosList() {
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="admin">Administrador</SelectItem>
-                                                <SelectItem value="coordinador">Coordinador</SelectItem>
-                                                <SelectItem value="tutor">Tutor</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-medium text-muted-foreground mb-2 block">Comunidad</label>
-                                        <Select
-                                            value={editingUser.comunidad || "docente_funcionario"}
-                                            onValueChange={(value) => {
-                                                setEditingUser({ ...editingUser, comunidad: value as TipoComunidad })
-                                            }}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="docente_funcionario">Docente/Funcionario UCU</SelectItem>
-                                                <SelectItem value="alumni">Alumni</SelectItem>
-                                                <SelectItem value="estudiante">Estudiante</SelectItem>
-                                                <SelectItem value="externo">Externo</SelectItem>
+                                                {roles.map((r) => (
+                                                    <SelectItem key={r.id_rol} value={r.nombre_rol.toLowerCase()}>
+                                                        {r.nombre_rol}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -686,23 +734,12 @@ export function UsuariosList() {
                                             size="sm"
                                             variant="outline"
                                             onClick={() => {
-                                                const newEstado = editingUser.estado === "activo" ? "inactivo" : "activo"
-                                                setEditingUser({ ...editingUser, estado: newEstado as EstadoUsuario })
+                                                const accion = editingUser.estado === "activo" ? "desactivar" : "activar"
+                                                setEditConfirmDialog({ open: true, accion: accion as "activar" | "desactivar" })
                                             }}
                                             className={editingUser.estado === "activo" ? "hover:bg-red-50 hover:text-red-600 hover:border-red-600 text-xs" : "hover:bg-green-50 hover:text-green-600 hover:border-green-600 text-xs"}
                                         >
                                             {editingUser.estado === "activo" ? "Desactivar Usuario" : "Activar Usuario"}
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="destructive"
-                                            onClick={() => {
-                                                setEditDialog(null)
-                                                setEditingUser(null)
-                                                setDeleteDialog(editingUser)
-                                            }}
-                                        >
-                                            Eliminar
                                         </Button>
                                     </div>
                                 </div>
