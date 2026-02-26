@@ -47,6 +47,7 @@ export function ProyectosList() {
   }, [fetchProyectos]);
 
   const filtered = proyectos.filter((p) => {
+    console.log("Evaluando proyecto:", p);
     const matchSearch =
       p.nombre_caso.toLowerCase().includes(search.toLowerCase()) ||
       (p.emprendedor?.toLowerCase() ?? "").includes(search.toLowerCase()) ||

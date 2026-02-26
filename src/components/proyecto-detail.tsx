@@ -59,6 +59,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useTutoresStore } from "../hooks/useTutoresStore";
+import { toast } from "../hooks/use-toast";
 
 export function ProyectoDetail({ id }: { id: string }) {
   type ProyectoView =
@@ -68,7 +70,7 @@ export function ProyectoDetail({ id }: { id: string }) {
       responsableId?: string; 
     };
 
-  const [tutores, setTutores] = useState<any[]>([]);
+  const { updateResponsable, fetchTutores, tutores } = useTutoresStore();
   const [responsableSeleccionado, setResponsableSeleccionado] = useState("")
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [pendingEstado, setPendingEstado] = useState("");
@@ -115,8 +117,12 @@ export function ProyectoDetail({ id }: { id: string }) {
     tipoPostulante: "externo",
     descripcion: caso.descripcion ?? "-",
     estado: String(caso.nombre_estado ?? "").trim(),
-    responsableIthaka: caso.tutor ?? "Sin asignar",
-    responsableId: caso.id_tutor != null ? String(caso.id_tutor) : "",
+    responsableIthaka: caso.tutor_nombre && caso.tutor_nombre !== "Sin asignar"  
+        ? caso.tutor_nombre 
+        : "Sin asignar",
+    responsableId: (caso.id_tutor && typeof caso.id_tutor === 'number')
+      ? String(caso.id_tutor)
+      : "sin_asignar",                                                        
     apoyos: [],
     hitos: [],
     evaluacion: undefined,
@@ -139,8 +145,8 @@ export function ProyectoDetail({ id }: { id: string }) {
   }, [id, fetchProyecto]);
 
   useEffect(() => {
-    fetchTutores();
-  }, []);
+  fetchTutores();
+}, [fetchTutores]);
 
 
 useEffect(() => {
@@ -182,52 +188,57 @@ useEffect(() => {
     setPendingEstado(estado);
   }
 
-  async function handleGuardarCambios() {    
-    const willChangeEstado =
-      pendingEstado && pendingEstado !== proyecto?.estado;
-    const willChangeResponsable =
-      responsableSeleccionado !== proyecto?.responsableId;
+  async function handleGuardarCambios() {
+    console.log("Guardando - responsableSeleccionado:", responsableSeleccionado);
+    console.log("Guardando - willChangeResponsable:", responsableSeleccionado !== proyecto?.responsableId);
+  
+    const willChangeEstado = pendingEstado && pendingEstado !== proyecto?.estado;
+    const willChangeResponsable = responsableSeleccionado !== proyecto?.responsableId;
 
-    // si no hay cambios, no hacemos nada
     if (!willChangeEstado && !willChangeResponsable) return;
 
     try {
       setSavingEstado(true);
 
-      // ejecutamos las actualizaciones necesarias en el servidor
       if (willChangeEstado) {
         await updateProyectoEstado(id, pendingEstado);
       }
       if (willChangeResponsable) {
         await saveResponsableChange(responsableSeleccionado);
       }
-      
-      //capturamos ambos cambios (estado y responsable)
-      await fetchProyectos();
-      await loadData();
 
+      // Pequeño delay para que el backend procese antes de refrescar
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      
+      await fetchProyectos();   // refresca la lista
+      await fetchProyecto(id);  // refresca el detalle
+      await loadData();         // refresca auditoría
+
+      toast({ title: "Cambios guardados" });
     } catch (error) {
       console.error("Error al guardar los cambios:", error);
+      toast({ title: "Error al guardar", variant: "destructive" });
     } finally {
       setSavingEstado(false);
     }
   }
 
-  async function saveResponsableChange(responsableId: string) {
-    if (responsableId === "sin_asignar") {
-      await updateProyectoResponsable(id, "Sin asignar");
-      return;
-    }
-
+  async function saveResponsableChange(newResponsableId: string) {
+    console.log("saveResponsableChange llamado con:", newResponsableId);
     const tutorObj = tutores.find(
-      (t) => String(t.id_usuario) === String(responsableId),
+      (t) => String(t.id_usuario) === String(newResponsableId)
     );
-    if (tutorObj) {
-      const nombreCompleto = `${tutorObj.nombre} ${tutorObj.apellido}`;
-      console.log("Enviando nuevo responsable:", nombreCompleto);
-      await updateProyectoResponsable(id, nombreCompleto);
-    } else {
-      console.error("No se encontró el tutor con ID:", responsableId);
+    console.log("tutorObj encontrado:", tutorObj);
+    const nombreCompleto = tutorObj
+      ? `${tutorObj.nombre} ${tutorObj.apellido}`
+      : "Sin asignar";
+
+    try {
+      const result = await updateResponsable(id, newResponsableId, nombreCompleto);
+      console.log("Resultado de updateResponsable:", result); // ← agregar
+    } catch (error) {
+      console.log("Error en updateResponsable:", error); // ← agregar
+      throw error;
     }
   }
 
@@ -268,30 +279,6 @@ useEffect(() => {
       notas: evalForm.notas,
     });
     loadData();
-  }
-
-  async function fetchTutores() {
-    try {
-      const token = localStorage.getItem("token"); 
-
-      const res = await fetch("http://localhost:8000/api/v1/usuarios", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-      console.log("Usuarios obtenidos: ", data);
-
-      const soloTutores = data.filter(
-        (u: any) => u.id_rol === 3
-      );
-      console.log("Tutores filtrados: ", soloTutores);
-
-      setTutores(soloTutores);
-    } catch (error) {
-      console.error("Error cargando tutores:", error);
-    }
   }
 
   function formatDate(dateStr: string) {
