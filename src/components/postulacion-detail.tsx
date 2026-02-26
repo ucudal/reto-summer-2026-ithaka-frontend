@@ -227,9 +227,6 @@ export function PostulacionDetail({ id }: { id: string }) {
                 <Button size="sm" disabled>
                   Guardar notas
                 </Button>
-                <p className="text-xs text-muted-foreground">
-                  Persistencia de notas pendiente de implementacion en el backend.
-                </p>
               </div>
             </CardContent>
           </Card>

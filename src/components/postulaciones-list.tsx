@@ -114,22 +114,18 @@ export function PostulacionesList() {
       t("postulaciones.id"),
       t("postulaciones.proyecto"),
       t("postulaciones.postulante"),
-      "Email",
       t("postulaciones.tipo"),
       t("postulaciones.estado"),
-      "Convocatoria",
-      "Completitud",
+      t("proyectoDetail.descripcion"),
       t("postulaciones.fecha"),
     ]
     const rows = filtered.map((p) => [
       p.id,
       p.nombreProyecto,
       p.nombrePostulante,
-      p.email,
       getTipoPostulanteLabel(lang, p.tipoPostulante as TipoPostulante),
       getEstadoPostulacionLabel(lang, p.estado),
-      p.convocatoria ?? "",
-      p.completitud ?? "",
+      p.descripcion ?? "",
       formatDate(p.creadoEn),
     ])
     const escape = (v: string) => `"${String(v).replace(/"/g, '""')}"`
