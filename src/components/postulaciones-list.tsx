@@ -1,7 +1,17 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { convertirAProyecto } from "@/src/app/actions"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/src/components/ui/alert-dialog"
 import type { Postulacion, TipoPostulante } from "@/src/lib/data"
 import { StatusBadge } from "@/src/components/status-badge"
 import { Card, CardContent } from "@/src/components/ui/card"
@@ -13,15 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select"
-import { Button } from "@/src/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/src/components/ui/dialog"
 import {
   Table,
   TableBody,
@@ -30,11 +31,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table"
-import { Search, ArrowUpRight, Plus } from "lucide-react"
+import { Search, Eye, Download } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/src/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useI18n, getTipoPostulanteLabel, getEstadoPostulacionLabel, LOCALE_BY_LANG } from "@/src/lib/i18n"
-import { postulacionesService } from "@/src/services/postulaciones.service"
-import Link from "next/link"
+import { casosService } from "@/src/services/casos.service"
+import axios from "axios"
 
 export function PostulacionesList() {
   const [postulaciones, setPostulaciones] = useState<Postulacion[]>([])
@@ -44,30 +47,35 @@ export function PostulacionesList() {
   const [filterFechaHasta, setFilterFechaHasta] = useState("")
   const [filterConvocatoria, setFilterConvocatoria] = useState<string>("all")
   const [filterCompletitud, setFilterCompletitud] = useState<string>("all")
-  const [convertDialog, setConvertDialog] = useState<Postulacion | null>(null)
-  const [loading, setLoading] = useState(false)
   const [loadingList, setLoadingList] = useState(false)
+  const [errorList, setErrorList] = useState<string | null>(null)
   const router = useRouter()
   const { t, lang } = useI18n()
 
   const loadData = useCallback(async () => {
     setLoadingList(true)
+    setErrorList(null)
     try {
-      const data = await postulacionesService.getAll({
-        estado: filterEstado === "all" ? undefined : (filterEstado as "borrador" | "recibida"),
-        fechaDesde: filterFechaDesde || undefined,
-        fechaHasta: filterFechaHasta || undefined,
-        convocatoria: filterConvocatoria === "all" ? undefined : filterConvocatoria,
-        completitud:
-          filterCompletitud === "all"
-            ? undefined
-            : (filterCompletitud as "completa" | "incompleta"),
-      })
+      const data = await casosService.getPostulaciones(
+        filterEstado === "all" ? undefined : filterEstado,
+      )
       setPostulaciones(data)
+    } catch (error) {
+      setPostulaciones([])
+      if (axios.isAxiosError(error)) {
+        const detail = error.response?.data?.detail
+        setErrorList(
+          typeof detail === "string"
+            ? detail
+            : "No se pudo cargar postulaciones desde el backend.",
+        )
+      } else {
+        setErrorList("No se pudo cargar postulaciones desde el backend.")
+      }
     } finally {
       setLoadingList(false)
     }
-  }, [filterCompletitud, filterConvocatoria, filterEstado, filterFechaDesde, filterFechaHasta])
+  }, [filterEstado])
 
   useEffect(() => {
     loadData()
@@ -78,23 +86,20 @@ export function PostulacionesList() {
       p.nombreProyecto.toLowerCase().includes(search.toLowerCase()) ||
       p.nombrePostulante.toLowerCase().includes(search.toLowerCase()) ||
       p.email.toLowerCase().includes(search.toLowerCase())
-    return matchSearch
+    const created = new Date(p.creadoEn).getTime()
+    const from = filterFechaDesde ? new Date(`${filterFechaDesde}T00:00:00`).getTime() : null
+    const to = filterFechaHasta ? new Date(`${filterFechaHasta}T23:59:59`).getTime() : null
+    const matchFecha = (from === null || created >= from) && (to === null || created <= to)
+    const matchConvocatoria =
+      filterConvocatoria === "all" || (p.convocatoria ?? "") === filterConvocatoria
+    const matchCompletitud =
+      filterCompletitud === "all" || (p.completitud ?? "incompleta") === filterCompletitud
+    return matchSearch && matchFecha && matchConvocatoria && matchCompletitud
   })
 
   const convocatorias = Array.from(
     new Set(postulaciones.map((p) => p.convocatoria).filter(Boolean)),
   ) as string[]
-
-  async function handleConvert() {
-    if (!convertDialog) return
-    setLoading(true)
-    const result = await convertirAProyecto(convertDialog.id)
-    setLoading(false)
-    setConvertDialog(null)
-    if (result) {
-      router.push(`/proyectos/${result.id}`)
-    }
-  }
 
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString(LOCALE_BY_LANG[lang], {
@@ -102,6 +107,40 @@ export function PostulacionesList() {
       month: "short",
       year: "numeric",
     })
+  }
+
+  function exportToCSV() {
+    const headers = [
+      t("postulaciones.id"),
+      t("postulaciones.proyecto"),
+      t("postulaciones.postulante"),
+      "Email",
+      t("postulaciones.tipo"),
+      t("postulaciones.estado"),
+      "Convocatoria",
+      "Completitud",
+      t("postulaciones.fecha"),
+    ]
+    const rows = filtered.map((p) => [
+      p.id,
+      p.nombreProyecto,
+      p.nombrePostulante,
+      p.email,
+      getTipoPostulanteLabel(lang, p.tipoPostulante as TipoPostulante),
+      getEstadoPostulacionLabel(lang, p.estado),
+      p.convocatoria ?? "",
+      p.completitud ?? "",
+      formatDate(p.creadoEn),
+    ])
+    const escape = (v: string) => `"${String(v).replace(/"/g, '""')}"`
+    const csv = [headers, ...rows].map((r) => r.map(escape).join(",")).join("\n")
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `postulaciones_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -113,12 +152,26 @@ export function PostulacionesList() {
             {t("postulaciones.subtitle")}
           </p>
         </div>
-        <Link href="/nueva-postulacion">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            {t("postulaciones.nueva")}
-          </Button>
-        </Link>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" size="sm" disabled={filtered.length === 0}>
+              <Download className="h-4 w-4 mr-2" />
+              {t("postulaciones.exportarCSV")}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("postulaciones.exportarCSVTitulo")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("postulaciones.exportarCSVDescripcion")} {filtered.length} {t("postulaciones.exportarCSVRegistros")}.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("common.cancelar")}</AlertDialogCancel>
+              <AlertDialogAction onClick={exportToCSV}>{t("postulaciones.exportarCSV")}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Filters */}
@@ -205,6 +258,12 @@ export function PostulacionesList() {
                     Cargando postulaciones...
                   </TableCell>
                 </TableRow>
+              ) : errorList ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-destructive">
+                    {errorList}
+                  </TableCell>
+                </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
@@ -244,22 +303,13 @@ export function PostulacionesList() {
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDate(p.creadoEn)}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {p.estado === "recibida" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setConvertDialog(p)
-                            }}
-                          >
-                            <ArrowUpRight className="h-3 w-3 mr-1" />
-                            {t("postulaciones.crearProyecto")}
-                          </Button>
-                        )}
-                      </div>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <Link href={`/postulaciones/${p.id}`}>
+                        <Button size="sm" variant="outline">
+                          <Eye className="h-3 w-3 mr-1" />
+                          {t("postulaciones.verDetalle")}
+                        </Button>
+                      </Link>
                     </TableCell>
                   </TableRow>
                 ))
@@ -268,31 +318,6 @@ export function PostulacionesList() {
           </Table>
         </CardContent>
       </Card>
-
-      {/* Convert Dialog */}
-      <Dialog
-        open={!!convertDialog}
-        onOpenChange={(open) => !open && setConvertDialog(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("postulaciones.convertirTitulo")}</DialogTitle>
-            <DialogDescription>
-              {t("postulaciones.convertirTexto")}{" "}
-              <strong>{convertDialog?.nombreProyecto}</strong> {t("common.of")}{" "}
-              <strong>{convertDialog?.nombrePostulante}</strong>. {t("postulaciones.convertirTexto2")}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConvertDialog(null)}>
-              {t("common.cancelar")}
-            </Button>
-            <Button onClick={handleConvert} disabled={loading}>
-              {loading ? t("common.creando") : t("common.confirmar")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
