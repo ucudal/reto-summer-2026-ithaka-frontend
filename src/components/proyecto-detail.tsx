@@ -38,7 +38,7 @@ import {
 import { Textarea } from "@/src/components/ui/textarea";
 import { useEstadosStore, useProyectosStore } from "@/src/hooks";
 import type { AuditEntry, Proyecto, TipoApoyo } from "@/src/lib/data";
-import { RESPONSABLES_ITHAKA } from "@/src/lib/data";
+// import { RESPONSABLES_ITHAKA } from "@/src/lib/data";
 import {
   getEtapaLabel,
   getPotencialLabel,
@@ -61,8 +61,15 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 export function ProyectoDetail({ id }: { id: string }) {
-  type ProyectoView = Omit<Proyecto, "estado"> & { estado: string };
+  type ProyectoView =
+    Omit<Proyecto, "estado"> &
+    {
+      estado: string;
+      responsableId?: string; 
+    };
 
+  const [tutores, setTutores] = useState<any[]>([]);
+  const [responsableSeleccionado, setResponsableSeleccionado] = useState("")
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [pendingEstado, setPendingEstado] = useState("");
   const [savingEstado, setSavingEstado] = useState(false);
@@ -80,6 +87,7 @@ export function ProyectoDetail({ id }: { id: string }) {
     selectedProyecto,
     errorMessage,
     fetchProyecto,
+    fetchProyectos,
     updateProyectoEstado,
   } = useProyectosStore();
   const { estadosProyecto, fetchEstados } = useEstadosStore();
@@ -108,6 +116,7 @@ export function ProyectoDetail({ id }: { id: string }) {
     descripcion: caso.descripcion ?? "-",
     estado: String(caso.nombre_estado ?? "").trim(),
     responsableIthaka: caso.tutor ?? "Sin asignar",
+    responsableId: caso.id_tutor != null ? String(caso.id_tutor) : "",
     apoyos: [],
     hitos: [],
     evaluacion: undefined,
@@ -128,6 +137,21 @@ export function ProyectoDetail({ id }: { id: string }) {
     const [a] = await Promise.all([getAuditForEntity(id), fetchProyecto(id)]);
     setAudit(a);
   }, [id, fetchProyecto]);
+
+  useEffect(() => {
+    fetchTutores();
+  }, []);
+
+
+useEffect(() => {
+    if (proyecto) {
+      setResponsableSeleccionado(
+        proyecto.responsableId && proyecto.responsableId !== ""
+          ? proyecto.responsableId
+          : "sin_asignar",
+      );
+    }
+  }, [proyecto?.responsableId]);
 
   useEffect(() => {
     loadData();
@@ -158,21 +182,55 @@ export function ProyectoDetail({ id }: { id: string }) {
     setPendingEstado(estado);
   }
 
-  async function handleGuardarCambios() {
-    if (!pendingEstado || pendingEstado === proyecto?.estado) return;
+  async function handleGuardarCambios() {    
+    const willChangeEstado =
+      pendingEstado && pendingEstado !== proyecto?.estado;
+    const willChangeResponsable =
+      responsableSeleccionado !== proyecto?.responsableId;
+
+    // si no hay cambios, no hacemos nada
+    if (!willChangeEstado && !willChangeResponsable) return;
+
     try {
       setSavingEstado(true);
-      await updateProyectoEstado(id, pendingEstado);
+
+      // ejecutamos las actualizaciones necesarias en el servidor
+      if (willChangeEstado) {
+        await updateProyectoEstado(id, pendingEstado);
+      }
+      if (willChangeResponsable) {
+        await saveResponsableChange(responsableSeleccionado);
+      }
+      
+      //capturamos ambos cambios (estado y responsable)
+      await fetchProyectos();
       await loadData();
+
+    } catch (error) {
+      console.error("Error al guardar los cambios:", error);
     } finally {
       setSavingEstado(false);
     }
   }
 
-  async function handleResponsableChange(responsable: string) {
-    await updateProyectoResponsable(id, responsable);
-    loadData();
+  async function saveResponsableChange(responsableId: string) {
+    if (responsableId === "sin_asignar") {
+      await updateProyectoResponsable(id, "Sin asignar");
+      return;
+    }
+
+    const tutorObj = tutores.find(
+      (t) => String(t.id_usuario) === String(responsableId),
+    );
+    if (tutorObj) {
+      const nombreCompleto = `${tutorObj.nombre} ${tutorObj.apellido}`;
+      console.log("Enviando nuevo responsable:", nombreCompleto);
+      await updateProyectoResponsable(id, nombreCompleto);
+    } else {
+      console.error("No se encontró el tutor con ID:", responsableId);
+    }
   }
+
 
   async function handleAddApoyo() {
     if (!nuevoApoyo) return;
@@ -212,6 +270,30 @@ export function ProyectoDetail({ id }: { id: string }) {
     loadData();
   }
 
+  async function fetchTutores() {
+    try {
+      const token = localStorage.getItem("token"); 
+
+      const res = await fetch("http://localhost:8000/api/v1/usuarios", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      console.log("Usuarios obtenidos: ", data);
+
+      const soloTutores = data.filter(
+        (u: any) => u.id_rol === 3
+      );
+      console.log("Tutores filtrados: ", soloTutores);
+
+      setTutores(soloTutores);
+    } catch (error) {
+      console.error("Error cargando tutores:", error);
+    }
+  }
+
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString(LOCALE_BY_LANG[lang], {
       day: "2-digit",
@@ -248,8 +330,11 @@ export function ProyectoDetail({ id }: { id: string }) {
             onClick={handleGuardarCambios}
             disabled={
               savingEstado ||
-              !pendingEstado ||
-              pendingEstado === proyecto.estado
+              
+              (
+                (!pendingEstado || pendingEstado === proyecto.estado) &&
+                responsableSeleccionado === proyecto.responsableId
+              )
             }
           >
             {savingEstado ? t("common.loading") : "Guardar cambios"}
@@ -374,10 +459,11 @@ export function ProyectoDetail({ id }: { id: string }) {
               </CardHeader>
               <CardContent>
                 <Select
-                  value={proyecto.responsableIthaka || "sin_asignar"}
-                  onValueChange={(v) =>
-                    handleResponsableChange(v === "sin_asignar" ? "" : v)
-                  }
+                  value={responsableSeleccionado || "sin_asignar"}
+                  onValueChange={(v) => {
+                    setResponsableSeleccionado(v);
+                    
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue
@@ -388,11 +474,13 @@ export function ProyectoDetail({ id }: { id: string }) {
                     <SelectItem value="sin_asignar">
                       {t("proyectoDetail.sinAsignar")}
                     </SelectItem>
-                    {RESPONSABLES_ITHAKA.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
+                    {
+                      tutores.map((tutor) => (
+                        <SelectItem key={tutor.id_usuario} value={String(tutor.id_usuario)}>
+                          {tutor.nombre + " " + tutor.apellido}
+                        </SelectItem>
+                      ))
+                    }
                   </SelectContent>
                 </Select>
               </CardContent>

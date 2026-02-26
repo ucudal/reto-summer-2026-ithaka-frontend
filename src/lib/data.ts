@@ -170,6 +170,9 @@ export const COMUNIDAD_LABELS: Record<TipoComunidad, string> = {
   externo: "Externo",
 }
 
+/*
+borrar, ya toma de la base
+
 export const RESPONSABLES_ITHAKA = [
   "Ana Garcia",
   "Carlos Rodriguez",
@@ -177,6 +180,7 @@ export const RESPONSABLES_ITHAKA = [
   "Juan Martinez",
   "Laura Fernandez",
 ]
+*/
 
 // --------------- Seed data ---------------
 
@@ -724,11 +728,12 @@ class IthakaStore {
   }
   updateProyectoResponsable(id: string, responsable: string, usuario: string) {
     const p = this.getProyecto(id)
-    if (p) {
-      p.responsableIthaka = responsable
-      p.actualizadoEn = new Date().toISOString()
-      this.addAudit("proyecto", id, "Responsable asignado", responsable, usuario)
-    }
+    if (!p) {
+      return null
+    };
+    p.responsableIthaka = responsable
+    p.actualizadoEn = new Date().toISOString()
+    this.addAudit("proyecto", id, "Responsable asignado", responsable, usuario)
     return p
   }
 
