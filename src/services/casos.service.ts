@@ -81,6 +81,16 @@ const unpackCasos = (data: CasosListResponse): CasoApi[] =>
   Array.isArray(data) ? data : data.casos ?? []
 
 export const casosService = {
+  async getAll(): Promise<CasoApi[]> {
+    try {
+      const { data } = await ithakaApi.get<CasosListResponse>("/casos/")
+      return unpackCasos(data)
+    } catch (error) {
+      console.error("Error en getAll casos:", error)
+      throw error
+    }
+  },
+
   async getPostulaciones(nombreEstado?: string): Promise<Postulacion[]> {
     const backendEstado = mapPostulacionEstadoFilterToBackend(nombreEstado)
     const { data } = await ithakaApi.get<CasosListResponse>("/casos/", {
