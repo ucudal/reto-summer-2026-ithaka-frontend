@@ -9,11 +9,11 @@ import {
   Inbox,
   FolderKanban,
   ClipboardCheck,
-  FileText,
   ChevronLeft,
   ChevronRight,
   Users,
   Settings as SettingsIcon,
+  HandHeart,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useState } from "react";
@@ -27,7 +27,7 @@ const navItems = [
   { href: "/postulaciones", label: "nav.postulaciones", icon: Inbox },
   { href: "/proyectos", label: "nav.proyectos", icon: FolderKanban },
   { href: "/evaluaciones", label: "nav.evaluaciones", icon: ClipboardCheck },
-  { href: "/nueva-postulacion", label: "nav.nuevaPostulacion", icon: FileText },
+  { href: "/apoyos", label: "Apoyos", icon: HandHeart },
   {
     href: "/gestion-usuarios",
     label: "nav.gestionUsuarios",
@@ -37,10 +37,10 @@ const navItems = [
 ];
 
 export function AppSidebar() {
+  const { startLogout, user } = useAuthStore();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { role } = useRole();
-  const { startLogout } = useAuthStore();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { openSettings, settings, setSettings } = useSettings();
   const isCompact = collapsed || settings.compactSidebar;
@@ -135,7 +135,7 @@ export function AppSidebar() {
         <div className="flex items-center justify-between">
           {!isCompact && (
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-medium">Juan</span>
+              <span className="text-sm font-medium">{user?.name || t("user.guest")}</span> {/* aca*/}
               <span className="text-xs text-sidebar-foreground/60">{roleLabel || role}</span>
             </div>
           )}
@@ -162,53 +162,40 @@ export function AppSidebar() {
         </div>
       </div>
 
-      {(role === "admin" || role === "coordinador") && <button
-        onClick={handleToggle}
-        className="
-            absolute
-            bottom-1/3
-            left-1/8
-            translate-x-1/2
-            -translate-y-1/2
-            z-50
-            rounded-full
-            border
-            bg-sidebar
-            p-2
-            shadow-md
-          "
-        aria-label={isCompact ? t("sidebar.expand") : t("sidebar.collapse")}
-      >
-        {isCompact ? (
-          <ChevronRight className="h-4 w-4" />
-        ) : (
-          <ChevronLeft className="h-4 w-4" />
-        )}
-      </button>}
+      {role === "tutor" && (
+        <button
+          onClick={handleToggle}
+          className={cn(
+            "absolute top-1/2 translate-x-1/2 -translate-y-1/2 z-50",
+            "rounded-full border bg-sidebar p-2 shadow-md",
+          )}
+          aria-label={isCompact ? t("sidebar.expand") : t("sidebar.collapse")}
+        >
+          {isCompact ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </button>
+      )}
 
-      {role === "tutor" && <button
-        onClick={handleToggle}
-        className="
-            absolute
-            top-1/3
-            left-1/8
-            translate-x-1/2
-            -translate-y-1/2
-            z-50
-            rounded-full
-            border
-            bg-sidebar
-            p-2
-            shadow-md
-          "
-        aria-label={isCompact ? t("sidebar.expand") : t("sidebar.collapse")}
-      >
-        {isCompact ? (
-          <ChevronRight className="h-4 w-4" />
-        ) : (
-          <ChevronLeft className="h-4 w-4" />
-        )}
-      </button>}
+      {role === "admin" && (
+        <button
+          onClick={handleToggle}
+          className={cn(
+            "absolute bottom-1/3 translate-x-1/2 -translate-y-1/2 z-50",
+            "rounded-full border bg-sidebar p-2 shadow-md",
+          )}
+          aria-label={isCompact ? t("sidebar.expand") : t("sidebar.collapse")}
+        >
+          {isCompact ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </button>
+      )}
+
 
       {/* Confirmacion de logout */}
       {showLogoutConfirm && (

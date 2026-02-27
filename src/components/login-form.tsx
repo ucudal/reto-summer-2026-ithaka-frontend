@@ -14,22 +14,54 @@ import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useI18n } from "@/src/lib/i18n";
-
-const roles = ["admin", "coordinador", "tutor", "operador"];
+import { useAuthStore } from "../hooks/useAuthStore";
 
 export function LoginForm() {
   const router = useRouter();
   const { setRole } = useRole();
   const { t } = useI18n();
+  const { startLogin, checkAuthToken, status, user, errorMessage } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     email: "",
     password: "",
     rememberMe: false,
   });
+
+  useEffect(() => {
+    checkAuthToken();
+  }, []);
+
+  // Redirigir cuando el usuario esté autenticado
+  useEffect(() => {
+    if (status === "authenticated" && user) {
+      // normalizamos el rol que viene del backend, puede venir en mayúsculas u
+      // incluso con un prefijo. así evitamos que el valor no coincida con los
+      // literales de TypeScript y que la sidebar no renderice correctamente.
+      const raw = (user.role || "").toString().toLowerCase();
+      const valid: Array<"admin" | "coordinador" | "tutor" | "operador"> = [
+        "admin",
+        "coordinador",
+        "tutor",
+        "operador",
+      ];
+      if (valid.includes(raw as any)) {
+        setRole(raw as any);
+      } else {
+        console.warn("login-form: rol inesperado", user.role);
+      }
+      router.push("/");
+    }
+  }, [status, user, router, setRole]);
+
+  // Mostrar errores del backend
+  useEffect(() => {
+    if (errorMessage) {
+      alert(errorMessage);
+    }
+  }, [errorMessage]);
 
   function update(field: string, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -37,36 +69,10 @@ export function LoginForm() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      // Credenciales hardcodeadas para testing
-      const validUsers: { [key: string]: { password: string; role: "admin" | "coordinador" | "tutor" | "operador" } } = {
-        "admin@ithaka.com": { password: "admin123", role: "admin" },
-        "coordinador@ithaka.com": { password: "coord123", role: "coordinador" },
-        "tutor@ithaka.com": { password: "tutor123", role: "tutor" },
-        "operador@ithaka.com": { password: "oper123", role: "operador" },
-      };
-
-      const user = validUsers[form.email];
-      
-      if (!user || user.password !== form.password) {
-        alert(t("login.errorInvalid"));
-        setLoading(false);
-        return;
-      }
-
-      // Setear rol según las credenciales
-      setRole(user.role);
-      
-      // Redirigir al dashboard
-      router.push("/");
-    } catch (error) {   
-      console.error("Login error:", error);
-      alert(t("login.errorGeneric"));
-    } finally {
-      setLoading(false);
-    }
+    await startLogin({
+      email: form.email,
+      password: form.password,
+    });
   }
 
   return (
@@ -148,10 +154,10 @@ export function LoginForm() {
               {/* Sign In Button */}
               <Button
                 type="submit"
-                disabled={loading || !form.email || !form.password}
+                disabled={!form.email || !form.password}
                 className="w-full h-10 text-base font-semibold"
               >
-                {loading ? t("login.signing") : t("login.signIn")}
+                {status === "checking" ? t("login.signing") : t("login.signIn")}
               </Button>
             </form>
           </CardContent>
