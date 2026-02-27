@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/src/components/ui/alert-dialog";
-import { useProyectosStore } from "@/src/hooks";
+import { useEstadosStore, useProyectosStore } from "@/src/hooks";
 import { Download, Eye, Search } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -53,10 +53,15 @@ export function ProyectosList() {
   const [filterEstado, setFilterEstado] = useState<string>("all");
   const [filterTipo, setFilterTipo] = useState<string>("all");
   const { t, lang } = useI18n();
+  const { estadosProyecto, fetchEstados } = useEstadosStore();
 
   useEffect(() => {
     fetchProyectos();
   }, [fetchProyectos]);
+
+  useEffect(() => {
+    fetchEstados();
+  }, [fetchEstados]);
 
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString(LOCALE_BY_LANG[lang], {
@@ -163,43 +168,14 @@ export function ProyectosList() {
                 <SelectItem value="all">
                   {t("postulaciones.todosEstados")}
                 </SelectItem>
-                <SelectItem value="recibida">
-                  {getEstadoProyectoLabel(lang, "recibida")}
-                </SelectItem>
-                <SelectItem value="en_evaluacion">
-                  {getEstadoProyectoLabel(lang, "en_evaluacion")}
-                </SelectItem>
-                <SelectItem value="proyecto_activo">
-                  {getEstadoProyectoLabel(lang, "proyecto_activo")}
-                </SelectItem>
-                <SelectItem value="incubado">
-                  {getEstadoProyectoLabel(lang, "incubado")}
-                </SelectItem>
-                <SelectItem value="cerrado">
-                  {getEstadoProyectoLabel(lang, "cerrado")}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterTipo} onValueChange={setFilterTipo}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder={t("postulaciones.tipoPostulante")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  {t("postulaciones.todosTipos")}
-                </SelectItem>
-                <SelectItem value="estudiante_ucu">
-                  {getTipoPostulanteLabel(lang, "estudiante_ucu")}
-                </SelectItem>
-                <SelectItem value="alumni">
-                  {getTipoPostulanteLabel(lang, "alumni")}
-                </SelectItem>
-                <SelectItem value="docente_funcionario">
-                  {getTipoPostulanteLabel(lang, "docente_funcionario")}
-                </SelectItem>
-                <SelectItem value="externo">
-                  {getTipoPostulanteLabel(lang, "externo")}
-                </SelectItem>
+                {estadosProyecto
+                  .filter(e => e.tipo_caso === "proyecto")
+                  .map(estado => (
+                    <SelectItem key={estado.id_estado} value={estado.nombre_estado}>
+                      {estado.nombre_estado}
+                    </SelectItem>
+                  ))
+                }
               </SelectContent>
             </Select>
           </div>

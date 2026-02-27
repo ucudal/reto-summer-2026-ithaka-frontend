@@ -20,9 +20,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (status === "authenticated" && user) {
-      setRole(user.role as "admin" | "coordinador" | "tutor" | "operador")
+      const raw = (user.role || "").toString().toLowerCase();
+      const valid: Array<"admin" | "coordinador" | "tutor" | "operador"> = [
+        "admin",
+        "coordinador",
+        "tutor",
+        "operador",
+      ];
+      if (valid.includes(raw as any)) {
+        setRole(raw as any);
+      } else {
+        console.warn("app-shell: unexpected role from auth store", user.role);
+      }
     } else if (status === "not-authenticated") {
-      router.push("/login")
+      router.push("/login");
     }
   }, [status, user, router, setRole])
 

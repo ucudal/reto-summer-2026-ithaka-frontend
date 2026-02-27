@@ -37,7 +37,21 @@ export function LoginForm() {
   // Redirigir cuando el usuario esté autenticado
   useEffect(() => {
     if (status === "authenticated" && user) {
-      setRole(user.role as "admin" | "coordinador" | "tutor" | "operador");
+      // normalizamos el rol que viene del backend, puede venir en mayúsculas u
+      // incluso con un prefijo. así evitamos que el valor no coincida con los
+      // literales de TypeScript y que la sidebar no renderice correctamente.
+      const raw = (user.role || "").toString().toLowerCase();
+      const valid: Array<"admin" | "coordinador" | "tutor" | "operador"> = [
+        "admin",
+        "coordinador",
+        "tutor",
+        "operador",
+      ];
+      if (valid.includes(raw as any)) {
+        setRole(raw as any);
+      } else {
+        console.warn("login-form: rol inesperado", user.role);
+      }
       router.push("/");
     }
   }, [status, user, router, setRole]);
