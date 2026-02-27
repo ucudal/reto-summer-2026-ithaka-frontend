@@ -1,6 +1,9 @@
 "use client"
 
+import { useCallback } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import axios from "axios"
+import { ithakaApi } from "@/src/api"
 import {
   AppDispatch,
   RootState,
@@ -9,8 +12,7 @@ import {
   onPostulacionError,
   clearSelectedPostulacion,
 } from "@/src/store"
-import { casosService } from "@/src/services/casos.service"
-import axios from "axios"
+import type { Caso } from "@/src/types/caso"
 
 export const usePostulacionesStore = () => {
   const { status, selectedPostulacion, errorMessage } = useSelector(
@@ -18,24 +20,38 @@ export const usePostulacionesStore = () => {
   )
   const dispatch: AppDispatch = useDispatch()
 
-  const fetchPostulacion = async (id: number) => {
-    dispatch(onLoadingPostulacion())
-    try {
-      const data = await casosService.getCaso(id)
-      dispatch(onSetSelectedPostulacion(data))
-    } catch (err) {
-      let message = "Error al cargar la postulación"
-      if (axios.isAxiosError(err)) {
-        message =
-          err.response?.data?.detail ??
-          err.response?.data?.message ??
-          message
+  const fetchPostulacion = useCallback(
+    async (id: number) => {
+      dispatch(onLoadingPostulacion())
+      try {
+        const { data } = await ithakaApi.get("/casos/", {
+          params: { tipo_caso: "postulacion" },
+        })
+        const casos: Caso[] = data?.casos ?? data ?? []
+        const found = casos.find((c) => c.id_caso === id)
+        if (found) {
+          dispatch(onSetSelectedPostulacion(found))
+        } else {
+          dispatch(onPostulacionError("Postulación no encontrada"))
+        }
+      } catch (err) {
+        let message = "Error al cargar la postulación"
+        if (axios.isAxiosError(err)) {
+          message =
+            err.response?.data?.detail ??
+            err.response?.data?.message ??
+            message
+        }
+        dispatch(onPostulacionError(message))
       }
-      dispatch(onPostulacionError(message))
-    }
-  }
+    },
+    [dispatch],
+  )
 
-  const resetPostulacion = () => dispatch(clearSelectedPostulacion())
+  const resetPostulacion = useCallback(
+    () => dispatch(clearSelectedPostulacion()),
+    [dispatch],
+  )
 
   return {
     status,

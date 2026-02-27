@@ -3,6 +3,7 @@ import { authSlice } from "./auth/authSlice";
 import { estadosSlice } from "./estados/estadosSlice";
 import { postulacionesSlice } from "./postulaciones/postulacionesSlice";
 import { proyectosSlice } from "./proyectos/proyectosSlice";
+import { evaluacionesSlice } from "./evaluaciones/evaluacionesSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     estados: estadosSlice.reducer,
     postulaciones: postulacionesSlice.reducer,
     proyectos: proyectosSlice.reducer,
+    evaluaciones: evaluacionesSlice.reducer,
   },
 });
 

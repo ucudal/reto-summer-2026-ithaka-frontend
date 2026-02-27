@@ -52,11 +52,18 @@ export const useProyectosStore = () => {
     async (id: number | string) => {
       dispatch(onLoadingProyecto());
       try {
-        const idCaso = String(id).trim();
-        const { data } = await ithakaApi.get(
-          `/casos/${encodeURIComponent(idCaso)}`,
-        );
-        dispatch(onSetSelectedProyecto(data?.caso ?? data));
+        const idCaso = Number(id);
+        const { data } = await ithakaApi.get("/casos/", {
+          params: { tipo_caso: "proyecto" },
+        });
+        const casos: Caso[] = data?.casos ?? data ?? [];
+        const found = casos.find((c) => c.id_caso === idCaso);
+        if (found) {
+          dispatch(onSetSelectedProyecto(found));
+          dispatch(onSetProyectos(casos));
+        } else {
+          dispatch(onProyectoError("Proyecto no encontrado"));
+        }
       } catch (err) {
         let message = "Error al cargar el proyecto";
         if (axios.isAxiosError(err)) {

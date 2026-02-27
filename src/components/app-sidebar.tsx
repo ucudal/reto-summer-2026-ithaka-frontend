@@ -37,10 +37,10 @@ const navItems = [
 ];
 
 export function AppSidebar() {
+  const { startLogout, user } = useAuthStore();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { role } = useRole();
-  const { startLogout } = useAuthStore();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { openSettings, settings, setSettings } = useSettings();
   const isCompact = collapsed || settings.compactSidebar;
@@ -135,7 +135,7 @@ export function AppSidebar() {
         <div className="flex items-center justify-between">
           {!isCompact && (
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-medium">Juan</span>
+              <span className="text-sm font-medium">{user?.name || t("user.guest")}</span> {/* aca*/}
               <span className="text-xs text-sidebar-foreground/60">{roleLabel || role}</span>
             </div>
           )}
