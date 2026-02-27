@@ -1,11 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs"
-import { Button } from "@/src/components/ui/button"
-import { Label } from "@/src/components/ui/label"
-import { Textarea } from "@/src/components/ui/textarea"
 import { Badge } from "@/src/components/ui/badge"
 import {
   ArrowLeft,
@@ -19,10 +16,10 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { usePostulacionesStore } from "@/src/hooks"
+import { NotasTab } from "@/src/components/notas-tab"
 
 export function PostulacionDetail({ id }: { id: string }) {
   const { status, selectedPostulacion, errorMessage, fetchPostulacion, resetPostulacion } = usePostulacionesStore()
-  const [notas, setNotas] = useState("")
 
   const postulacionId = Number(id)
 
@@ -208,28 +205,7 @@ export function PostulacionDetail({ id }: { id: string }) {
         </TabsContent>
 
         <TabsContent value="notas">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Notas internas</CardTitle>
-              <CardDescription>
-                Observaciones y comentarios internos sobre este caso
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <Label>Notas</Label>
-                <Textarea
-                  value={notas}
-                  onChange={(e) => setNotas(e.target.value)}
-                  placeholder="Observaciones, comentarios internos..."
-                  rows={6}
-                />
-                <Button size="sm" disabled>
-                  Guardar notas
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <NotasTab id_caso={postulacion.id_caso} />
         </TabsContent>
       </Tabs>
     </div>
