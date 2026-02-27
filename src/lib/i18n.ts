@@ -40,6 +40,11 @@ const translations: Record<Lang, Record<string, string>> = {
     "logout.confirm": "Cerrar sesión",
     "dashboard.subtitle": "Visión general del ecosistema Ithaka",
     "dashboard.totalPostulaciones": "Total Postulaciones",
+    "dashboard.totalProyectos": "Total Proyectos",
+    "dashboard.totalProyectosIncubados": "Total Proyectos Incubados",
+    "dashboard.totalTutores": "Total Tutores",
+    "dashboard.totalEmprendedores": "Total Emprendedores",
+    "dashboard.totalApoyos": "Total de Apoyos",
     "dashboard.proyectosActivos": "Proyectos Activos",
     "dashboard.proyectosIncubados": "Proyectos Incubados",
     "dashboard.comunidadUcu": "Comunidad UCU",
@@ -48,11 +53,16 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashboard.postulacionProyecto": "Postulación a Proyecto",
     "dashboard.proyectoIncubacion": "Proyecto a Incubación",
     "dashboard.proyectosPorEstado": "Proyectos por estado",
+    "dashboard.postulacionesPorEstado": "Postulaciones por estado",
+    "dashboard.switchEstados": "Cambiar tipo de estado",
+    "dashboard.switchProyectos": "Proyectos",
+    "dashboard.switchPostulaciones": "Postulaciones",
     "dashboard.distribucionApoyos": "Distribución de apoyos",
     "dashboard.noData": "Sin datos disponibles",
     "dashboard.loading": "Cargando métricas...",
     "postulaciones.title": "Postulaciones",
-    "postulaciones.subtitle": "Bandeja de entrada de postulaciones desde el chatbot",
+    "postulaciones.subtitle":
+      "Bandeja de entrada de postulaciones desde el chatbot",
     "postulaciones.nueva": "Nueva postulación",
     "postulaciones.search": "Buscar por nombre, postulante o email...",
     "postulaciones.estado": "Estado",
@@ -62,8 +72,10 @@ const translations: Record<Lang, Record<string, string>> = {
     "postulaciones.noResults": "No se encontraron postulaciones",
     "postulaciones.crearProyecto": "Crear proyecto",
     "postulaciones.convertirTitulo": "Convertir a proyecto",
-    "postulaciones.convertirTexto": "Se creará un nuevo proyecto a partir de la postulación",
-    "postulaciones.convertirTexto2": "Esta acción registrará el cambio en el historial de auditoría.",
+    "postulaciones.convertirTexto":
+      "Se creará un nuevo proyecto a partir de la postulación",
+    "postulaciones.convertirTexto2":
+      "Esta acción registrará el cambio en el historial de auditoría.",
     "common.cancelar": "Cancelar",
     "common.confirmar": "Confirmar",
     "common.creando": "Creando...",
@@ -79,7 +91,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "postulaciones.exportarCSVDescripcion": "Se exportarán",
     "postulaciones.exportarCSVRegistros": "registros al archivo CSV",
     "proyectos.title": "Proyectos",
-    "proyectos.subtitle": "Gestión del ciclo de vida de ideas y emprendimientos",
+    "proyectos.subtitle":
+      "Gestión del ciclo de vida de ideas y emprendimientos",
     "proyectos.search": "Buscar por nombre, postulante o ID...",
     "proyectos.responsable": "Responsable",
     "proyectos.apoyos": "Apoyos",
@@ -154,7 +167,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "proyectoDetail.selectResponsable": "Seleccionar responsable",
     "proyectoDetail.sinAsignar": "Sin asignar",
     "proyectoDetail.apoyosTitle": "Apoyos y programas",
-    "proyectoDetail.apoyosDesc": "Un proyecto puede tener múltiples apoyos activos simultáneamente",
+    "proyectoDetail.apoyosDesc":
+      "Un proyecto puede tener múltiples apoyos activos simultáneamente",
     "proyectoDetail.tipoApoyo": "Tipo de apoyo",
     "proyectoDetail.agregarApoyo": "Agregar apoyo",
     "proyectoDetail.sinApoyos": "Sin apoyos asignados",
@@ -168,56 +182,68 @@ const translations: Record<Lang, Record<string, string>> = {
     "proyectoDetail.agregar": "Agregar",
     "proyectoDetail.sinHitos": "Sin hitos definidos",
     "proyectoDetail.evaluacionTitle": "Evaluación estructurada",
-    "proyectoDetail.evaluacionDesc": "Formulario interno de evaluación del emprendimiento",
+    "proyectoDetail.evaluacionDesc":
+      "Formulario interno de evaluación del emprendimiento",
     "proyectoDetail.etapa": "Etapa del emprendimiento",
     "proyectoDetail.seleccionarEtapa": "Seleccionar etapa",
     "proyectoDetail.potencial": "Potencial de incubación",
     "proyectoDetail.seleccionarPotencial": "Seleccionar potencial",
     "proyectoDetail.pertenencia": "Pertenece a comunidad UCU",
     "proyectoDetail.notas": "Notas de evaluación",
-    "proyectoDetail.notasPlaceholder": "Observaciones sobre el emprendimiento...",
+    "proyectoDetail.notasPlaceholder":
+      "Observaciones sobre el emprendimiento...",
     "proyectoDetail.actualizarEval": "Actualizar evaluación",
     "proyectoDetail.guardarEval": "Guardar evaluación",
     "proyectoDetail.ultimaActualizacion": "Última actualización",
     "proyectoDetail.auditoriaTitle": "Historial de auditoría",
-    "proyectoDetail.auditoriaDesc": "Registro de cambios realizados en este proyecto",
+    "proyectoDetail.auditoriaDesc":
+      "Registro de cambios realizados en este proyecto",
     "proyectoDetail.sinAuditoria": "Sin registros de auditoría",
     "proyectoDetail.por": "Por",
     "proyectoDetail.el": "el",
     "nuevaPostulacion.title": "Nueva Postulación",
-    "nuevaPostulacion.subtitle": "Simula el ingreso de una postulación desde el chatbot",
+    "nuevaPostulacion.subtitle":
+      "Simula el ingreso de una postulación desde el chatbot",
     "nuevaPostulacion.chatbot": "Chatbot Ithaka",
     "nuevaPostulacion.paso": "Paso",
     "nuevaPostulacion.de": "de",
-    "nuevaPostulacion.nombrePrompt": "Hola, bienvenido a Ithaka. Contame, ¿cuál es el nombre de tu proyecto o idea?",
+    "nuevaPostulacion.nombrePrompt":
+      "Hola, bienvenido a Ithaka. Contame, ¿cuál es el nombre de tu proyecto o idea?",
     "nuevaPostulacion.nombreLabel": "Nombre del proyecto",
     "nuevaPostulacion.nombrePlaceholder": "Ej: EcoTrack, MindfulU...",
-    "nuevaPostulacion.postulantePrompt": "¡Excelente! Ahora necesito tus datos de contacto.",
+    "nuevaPostulacion.postulantePrompt":
+      "¡Excelente! Ahora necesito tus datos de contacto.",
     "nuevaPostulacion.postulanteLabel": "Nombre completo",
     "nuevaPostulacion.postulantePlaceholder": "Tu nombre completo",
     "nuevaPostulacion.emailPlaceholder": "tu@email.com",
     "nuevaPostulacion.tipoPrompt": "Perfecto. ¿Cuál es tu vínculo con la UCU?",
     "nuevaPostulacion.tipoLabel": "Tipo de postulante",
     "nuevaPostulacion.tipoPlaceholder": "Selecciona tu vínculo",
-    "nuevaPostulacion.descripcionPrompt": "¡Genial! Ahora contame brevemente de qué se trata tu idea o emprendimiento.",
+    "nuevaPostulacion.descripcionPrompt":
+      "¡Genial! Ahora contame brevemente de qué se trata tu idea o emprendimiento.",
     "nuevaPostulacion.descripcionLabel": "Descripción de la idea",
-    "nuevaPostulacion.descripcionPlaceholder": "Describe tu idea en unas líneas...",
-    "nuevaPostulacion.confirmarPrompt": "¡Perfecto! Revisa los datos antes de enviar tu postulación.",
+    "nuevaPostulacion.descripcionPlaceholder":
+      "Describe tu idea en unas líneas...",
+    "nuevaPostulacion.confirmarPrompt":
+      "¡Perfecto! Revisa los datos antes de enviar tu postulación.",
     "nuevaPostulacion.confirmarProyecto": "Proyecto",
     "nuevaPostulacion.confirmarPostulante": "Postulante",
     "nuevaPostulacion.confirmarEmail": "Email",
     "nuevaPostulacion.confirmarVinculo": "Vínculo UCU",
     "nuevaPostulacion.confirmarDescripcion": "Descripción",
-    "nuevaPostulacion.confirmarAviso": "Al enviar, aceptas que tus datos serán utilizados para la evaluación de tu postulación y contacto por parte del equipo Ithaka.",
+    "nuevaPostulacion.confirmarAviso":
+      "Al enviar, aceptas que tus datos serán utilizados para la evaluación de tu postulación y contacto por parte del equipo Ithaka.",
     "nuevaPostulacion.anterior": "Anterior",
     "nuevaPostulacion.siguiente": "Siguiente",
     "nuevaPostulacion.guardarBorrador": "Guardar borrador",
     "nuevaPostulacion.enviando": "Enviando...",
     "nuevaPostulacion.enviarPostulacion": "Enviar postulación",
     "gestionUsuarios.title": "Gestión de Usuarios",
-    "gestionUsuarios.subtitle": "Panel administrativo para gestionar usuarios del sistema",
+    "gestionUsuarios.subtitle":
+      "Panel administrativo para gestionar usuarios del sistema",
     "gestionUsuarios.sectionTitle": "Usuarios",
-    "gestionUsuarios.sectionDesc": "Este es el espacio para gestionar los usuarios del sistema.",
+    "gestionUsuarios.sectionDesc":
+      "Este es el espacio para gestionar los usuarios del sistema.",
   },
   en: {
     "app.title": "Ithaka Backoffice",
@@ -249,6 +275,11 @@ const translations: Record<Lang, Record<string, string>> = {
     "logout.confirm": "Sign out",
     "dashboard.subtitle": "Overview of the Ithaka ecosystem",
     "dashboard.totalPostulaciones": "Total applications",
+    "dashboard.totalProyectos": "Total projects",
+    "dashboard.totalProyectosIncubados": "Total incubated projects",
+    "dashboard.totalTutores": "Total tutors",
+    "dashboard.totalEmprendedores": "Total entrepreneurs",
+    "dashboard.totalApoyos": "Total supports",
     "dashboard.proyectosActivos": "Active projects",
     "dashboard.proyectosIncubados": "Incubated projects",
     "dashboard.comunidadUcu": "UCU community",
@@ -257,6 +288,10 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashboard.postulacionProyecto": "Application to Project",
     "dashboard.proyectoIncubacion": "Project to Incubation",
     "dashboard.proyectosPorEstado": "Projects by status",
+    "dashboard.postulacionesPorEstado": "Applications by status",
+    "dashboard.switchEstados": "Switch status type",
+    "dashboard.switchProyectos": "Projects",
+    "dashboard.switchPostulaciones": "Applications",
     "dashboard.distribucionApoyos": "Support distribution",
     "dashboard.noData": "No data available",
     "dashboard.loading": "Loading metrics...",
@@ -271,8 +306,10 @@ const translations: Record<Lang, Record<string, string>> = {
     "postulaciones.noResults": "No applications found",
     "postulaciones.crearProyecto": "Create project",
     "postulaciones.convertirTitulo": "Convert to project",
-    "postulaciones.convertirTexto": "A new project will be created from the application",
-    "postulaciones.convertirTexto2": "This action will be recorded in the audit log.",
+    "postulaciones.convertirTexto":
+      "A new project will be created from the application",
+    "postulaciones.convertirTexto2":
+      "This action will be recorded in the audit log.",
     "common.cancelar": "Cancel",
     "common.confirmar": "Confirm",
     "common.creando": "Creating...",
@@ -363,7 +400,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "proyectoDetail.selectResponsable": "Select owner",
     "proyectoDetail.sinAsignar": "Unassigned",
     "proyectoDetail.apoyosTitle": "Supports and programs",
-    "proyectoDetail.apoyosDesc": "A project can have multiple active supports at once",
+    "proyectoDetail.apoyosDesc":
+      "A project can have multiple active supports at once",
     "proyectoDetail.tipoApoyo": "Support type",
     "proyectoDetail.agregarApoyo": "Add support",
     "proyectoDetail.sinApoyos": "No supports assigned",
@@ -394,30 +432,37 @@ const translations: Record<Lang, Record<string, string>> = {
     "proyectoDetail.por": "By",
     "proyectoDetail.el": "on",
     "nuevaPostulacion.title": "New Application",
-    "nuevaPostulacion.subtitle": "Simulate an application submitted via the chatbot",
+    "nuevaPostulacion.subtitle":
+      "Simulate an application submitted via the chatbot",
     "nuevaPostulacion.chatbot": "Ithaka Chatbot",
     "nuevaPostulacion.paso": "Step",
     "nuevaPostulacion.de": "of",
-    "nuevaPostulacion.nombrePrompt": "Hi, welcome to Ithaka. What's the name of your project or idea?",
+    "nuevaPostulacion.nombrePrompt":
+      "Hi, welcome to Ithaka. What's the name of your project or idea?",
     "nuevaPostulacion.nombreLabel": "Project name",
     "nuevaPostulacion.nombrePlaceholder": "e.g., EcoTrack, MindfulU...",
-    "nuevaPostulacion.postulantePrompt": "Great! Now I need your contact details.",
+    "nuevaPostulacion.postulantePrompt":
+      "Great! Now I need your contact details.",
     "nuevaPostulacion.postulanteLabel": "Full name",
     "nuevaPostulacion.postulantePlaceholder": "Your full name",
     "nuevaPostulacion.emailPlaceholder": "you@email.com",
     "nuevaPostulacion.tipoPrompt": "Perfect. What's your link to UCU?",
     "nuevaPostulacion.tipoLabel": "Applicant type",
     "nuevaPostulacion.tipoPlaceholder": "Select your link",
-    "nuevaPostulacion.descripcionPrompt": "Awesome! Now tell me briefly what your idea or venture is about.",
+    "nuevaPostulacion.descripcionPrompt":
+      "Awesome! Now tell me briefly what your idea or venture is about.",
     "nuevaPostulacion.descripcionLabel": "Idea description",
-    "nuevaPostulacion.descripcionPlaceholder": "Describe your idea in a few lines...",
-    "nuevaPostulacion.confirmarPrompt": "Perfect! Review the details before submitting your application.",
+    "nuevaPostulacion.descripcionPlaceholder":
+      "Describe your idea in a few lines...",
+    "nuevaPostulacion.confirmarPrompt":
+      "Perfect! Review the details before submitting your application.",
     "nuevaPostulacion.confirmarProyecto": "Project",
     "nuevaPostulacion.confirmarPostulante": "Applicant",
     "nuevaPostulacion.confirmarEmail": "Email",
     "nuevaPostulacion.confirmarVinculo": "UCU link",
     "nuevaPostulacion.confirmarDescripcion": "Description",
-    "nuevaPostulacion.confirmarAviso": "By submitting, you agree that your data will be used for evaluating your application and for contact by the Ithaka team.",
+    "nuevaPostulacion.confirmarAviso":
+      "By submitting, you agree that your data will be used for evaluating your application and for contact by the Ithaka team.",
     "nuevaPostulacion.anterior": "Previous",
     "nuevaPostulacion.siguiente": "Next",
     "nuevaPostulacion.guardarBorrador": "Save draft",
@@ -458,6 +503,11 @@ const translations: Record<Lang, Record<string, string>> = {
     "logout.confirm": "Sair",
     "dashboard.subtitle": "Visão geral do ecossistema Ithaka",
     "dashboard.totalPostulaciones": "Total de inscrições",
+    "dashboard.totalProyectos": "Total de projetos",
+    "dashboard.totalProyectosIncubados": "Total de projetos incubados",
+    "dashboard.totalTutores": "Total de tutores",
+    "dashboard.totalEmprendedores": "Total de empreendedores",
+    "dashboard.totalApoyos": "Total de apoios",
     "dashboard.proyectosActivos": "Projetos ativos",
     "dashboard.proyectosIncubados": "Projetos incubados",
     "dashboard.comunidadUcu": "Comunidade UCU",
@@ -466,6 +516,10 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashboard.postulacionProyecto": "Inscrição para Projeto",
     "dashboard.proyectoIncubacion": "Projeto para Incubação",
     "dashboard.proyectosPorEstado": "Projetos por status",
+    "dashboard.postulacionesPorEstado": "Inscrições por estado",
+    "dashboard.switchEstados": "Alternar tipo de estado",
+    "dashboard.switchProyectos": "Projetos",
+    "dashboard.switchPostulaciones": "Inscrições",
     "dashboard.distribucionApoyos": "Distribuição de apoios",
     "dashboard.noData": "Sem dados disponíveis",
     "dashboard.loading": "Carregando métricas...",
@@ -480,8 +534,10 @@ const translations: Record<Lang, Record<string, string>> = {
     "postulaciones.noResults": "Nenhuma inscrição encontrada",
     "postulaciones.crearProyecto": "Criar projeto",
     "postulaciones.convertirTitulo": "Converter em projeto",
-    "postulaciones.convertirTexto": "Um novo projeto será criado a partir da inscrição",
-    "postulaciones.convertirTexto2": "Esta ação será registrada no histórico de auditoria.",
+    "postulaciones.convertirTexto":
+      "Um novo projeto será criado a partir da inscrição",
+    "postulaciones.convertirTexto2":
+      "Esta ação será registrada no histórico de auditoria.",
     "common.cancelar": "Cancelar",
     "common.confirmar": "Confirmar",
     "common.creando": "Criando...",
@@ -572,7 +628,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "proyectoDetail.selectResponsable": "Selecionar responsável",
     "proyectoDetail.sinAsignar": "Não atribuído",
     "proyectoDetail.apoyosTitle": "Apoios e programas",
-    "proyectoDetail.apoyosDesc": "Um projeto pode ter múltiplos apoios ativos simultaneamente",
+    "proyectoDetail.apoyosDesc":
+      "Um projeto pode ter múltiplos apoios ativos simultaneamente",
     "proyectoDetail.tipoApoyo": "Tipo de apoio",
     "proyectoDetail.agregarApoyo": "Adicionar apoio",
     "proyectoDetail.sinApoyos": "Sem apoios atribuídos",
@@ -586,7 +643,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "proyectoDetail.agregar": "Adicionar",
     "proyectoDetail.sinHitos": "Sem marcos definidos",
     "proyectoDetail.evaluacionTitle": "Avaliação estruturada",
-    "proyectoDetail.evaluacionDesc": "Formulário interno de avaliação do empreendimento",
+    "proyectoDetail.evaluacionDesc":
+      "Formulário interno de avaliação do empreendimento",
     "proyectoDetail.etapa": "Etapa do empreendimento",
     "proyectoDetail.seleccionarEtapa": "Selecionar etapa",
     "proyectoDetail.potencial": "Potencial de incubação",
@@ -598,7 +656,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "proyectoDetail.guardarEval": "Salvar avaliação",
     "proyectoDetail.ultimaActualizacion": "Última atualização",
     "proyectoDetail.auditoriaTitle": "Histórico de auditoria",
-    "proyectoDetail.auditoriaDesc": "Registro de mudanças realizadas neste projeto",
+    "proyectoDetail.auditoriaDesc":
+      "Registro de mudanças realizadas neste projeto",
     "proyectoDetail.sinAuditoria": "Sem registros de auditoria",
     "proyectoDetail.por": "Por",
     "proyectoDetail.el": "em",
@@ -607,35 +666,43 @@ const translations: Record<Lang, Record<string, string>> = {
     "nuevaPostulacion.chatbot": "Chatbot Ithaka",
     "nuevaPostulacion.paso": "Passo",
     "nuevaPostulacion.de": "de",
-    "nuevaPostulacion.nombrePrompt": "Olá, bem-vindo à Ithaka. Qual é o nome do seu projeto ou ideia?",
+    "nuevaPostulacion.nombrePrompt":
+      "Olá, bem-vindo à Ithaka. Qual é o nome do seu projeto ou ideia?",
     "nuevaPostulacion.nombreLabel": "Nome do projeto",
     "nuevaPostulacion.nombrePlaceholder": "Ex: EcoTrack, MindfulU...",
-    "nuevaPostulacion.postulantePrompt": "Excelente! Agora preciso dos seus dados de contato.",
+    "nuevaPostulacion.postulantePrompt":
+      "Excelente! Agora preciso dos seus dados de contato.",
     "nuevaPostulacion.postulanteLabel": "Nome completo",
     "nuevaPostulacion.postulantePlaceholder": "Seu nome completo",
     "nuevaPostulacion.emailPlaceholder": "voce@email.com",
     "nuevaPostulacion.tipoPrompt": "Perfeito. Qual é seu vínculo com a UCU?",
     "nuevaPostulacion.tipoLabel": "Tipo de candidato",
     "nuevaPostulacion.tipoPlaceholder": "Selecione seu vínculo",
-    "nuevaPostulacion.descripcionPrompt": "Ótimo! Agora conte brevemente do que se trata sua ideia ou empreendimento.",
+    "nuevaPostulacion.descripcionPrompt":
+      "Ótimo! Agora conte brevemente do que se trata sua ideia ou empreendimento.",
     "nuevaPostulacion.descripcionLabel": "Descrição da ideia",
-    "nuevaPostulacion.descripcionPlaceholder": "Descreva sua ideia em algumas linhas...",
-    "nuevaPostulacion.confirmarPrompt": "Perfeito! Revise os dados antes de enviar sua inscrição.",
+    "nuevaPostulacion.descripcionPlaceholder":
+      "Descreva sua ideia em algumas linhas...",
+    "nuevaPostulacion.confirmarPrompt":
+      "Perfeito! Revise os dados antes de enviar sua inscrição.",
     "nuevaPostulacion.confirmarProyecto": "Projeto",
     "nuevaPostulacion.confirmarPostulante": "Candidato",
     "nuevaPostulacion.confirmarEmail": "Email",
     "nuevaPostulacion.confirmarVinculo": "Vínculo UCU",
     "nuevaPostulacion.confirmarDescripcion": "Descrição",
-    "nuevaPostulacion.confirmarAviso": "Ao enviar, você aceita que seus dados serão usados para avaliar sua inscrição e contato pela equipe Ithaka.",
+    "nuevaPostulacion.confirmarAviso":
+      "Ao enviar, você aceita que seus dados serão usados para avaliar sua inscrição e contato pela equipe Ithaka.",
     "nuevaPostulacion.anterior": "Anterior",
     "nuevaPostulacion.siguiente": "Próximo",
     "nuevaPostulacion.guardarBorrador": "Salvar rascunho",
     "nuevaPostulacion.enviando": "Enviando...",
     "nuevaPostulacion.enviarPostulacion": "Enviar inscrição",
     "gestionUsuarios.title": "Gestão de usuários",
-    "gestionUsuarios.subtitle": "Painel administrativo para gerenciar usuários do sistema",
+    "gestionUsuarios.subtitle":
+      "Painel administrativo para gerenciar usuários do sistema",
     "gestionUsuarios.sectionTitle": "Usuários",
-    "gestionUsuarios.sectionDesc": "Este é o espaço para gerenciar os usuários do sistema.",
+    "gestionUsuarios.sectionDesc":
+      "Este é o espaço para gerenciar os usuários do sistema.",
   },
 };
 
@@ -678,7 +745,10 @@ const tipoPostulanteLabels: Record<Lang, Record<TipoPostulante, string>> = {
   },
 };
 
-const estadoPostulacionLabels: Record<Lang, Record<EstadoPostulacion, string>> = {
+const estadoPostulacionLabels: Record<
+  Lang,
+  Record<EstadoPostulacion, string>
+> = {
   es: { borrador: "Borrador", recibida: "Recibida" },
   en: { borrador: "Draft", recibida: "Received" },
   pt: { borrador: "Rascunho", recibida: "Recebida" },
@@ -738,7 +808,10 @@ const estadoApoyoLabels: Record<Lang, Record<EstadoApoyo, string>> = {
   pt: { activo: "Ativo", finalizado: "Finalizado" },
 };
 
-const potencialLabels: Record<Lang, Record<"alto" | "medio" | "bajo", string>> = {
+const potencialLabels: Record<
+  Lang,
+  Record<"alto" | "medio" | "bajo", string>
+> = {
   es: { alto: "Alto", medio: "Medio", bajo: "Bajo" },
   en: { alto: "High", medio: "Medium", bajo: "Low" },
   pt: { alto: "Alto", medio: "Médio", bajo: "Baixo" },
@@ -746,7 +819,10 @@ const potencialLabels: Record<Lang, Record<"alto" | "medio" | "bajo", string>> =
 
 const etapaLabels: Record<
   Lang,
-  Record<"Ideacion" | "Validacion" | "Traccion" | "Escalamiento" | "Consolidacion", string>
+  Record<
+    "Ideacion" | "Validacion" | "Traccion" | "Escalamiento" | "Consolidacion",
+    string
+  >
 > = {
   es: {
     Ideacion: "Ideación",
@@ -775,7 +851,10 @@ export function getTipoPostulanteLabel(lang: Lang, value: TipoPostulante) {
   return tipoPostulanteLabels[lang][value];
 }
 
-export function getEstadoPostulacionLabel(lang: Lang, value: EstadoPostulacion) {
+export function getEstadoPostulacionLabel(
+  lang: Lang,
+  value: EstadoPostulacion,
+) {
   return estadoPostulacionLabels[lang][value];
 }
 
@@ -791,13 +870,21 @@ export function getEstadoApoyoLabel(lang: Lang, value: EstadoApoyo) {
   return estadoApoyoLabels[lang][value];
 }
 
-export function getPotencialLabel(lang: Lang, value: "alto" | "medio" | "bajo") {
+export function getPotencialLabel(
+  lang: Lang,
+  value: "alto" | "medio" | "bajo",
+) {
   return potencialLabels[lang][value];
 }
 
 export function getEtapaLabel(
   lang: Lang,
-  value: "Ideacion" | "Validacion" | "Traccion" | "Escalamiento" | "Consolidacion",
+  value:
+    | "Ideacion"
+    | "Validacion"
+    | "Traccion"
+    | "Escalamiento"
+    | "Consolidacion",
 ) {
   return etapaLabels[lang][value];
 }
