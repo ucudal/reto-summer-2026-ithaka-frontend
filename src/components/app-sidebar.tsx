@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   Plus,
   Settings as SettingsIcon,
+  HandHeart,
   Users,
 } from "lucide-react";
 import Image from "next/image";
@@ -41,6 +42,7 @@ const navItems = [
   },
   { href: "/proyectos", label: "nav.proyectos", icon: FolderKanban },
   { href: "/evaluaciones", label: "nav.evaluaciones", icon: ClipboardCheck },
+  { href: "/apoyos", label: "Apoyos", icon: HandHeart },
   {
     href: "/gestion-usuarios",
     label: "nav.gestionUsuarios",
