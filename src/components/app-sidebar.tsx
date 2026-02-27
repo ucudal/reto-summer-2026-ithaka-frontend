@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Users,
   Settings as SettingsIcon,
+  HandHeart,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useState } from "react";
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/postulaciones", label: "nav.postulaciones", icon: Inbox },
   { href: "/proyectos", label: "nav.proyectos", icon: FolderKanban },
   { href: "/evaluaciones", label: "nav.evaluaciones", icon: ClipboardCheck },
+  { href: "/apoyos", label: "Apoyos", icon: HandHeart },
   {
     href: "/gestion-usuarios",
     label: "nav.gestionUsuarios",

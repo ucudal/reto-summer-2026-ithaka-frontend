@@ -61,7 +61,7 @@ function transformBackendToFrontend(backendUser: UsuarioBackendResponse): Usuari
 export const usuariosService = {
   async getRoles() {
     try {
-      const { data } = await ithakaApi.get<Array<{ id_rol: number; nombre_rol: string }>>("/api/v1/roles/")
+      const { data } = await ithakaApi.get<Array<{ id_rol: number; nombre_rol: string }>>("/roles/")
       return data
     } catch (error) {
       console.error("Error trayendo roles:", error)
@@ -71,7 +71,7 @@ export const usuariosService = {
 
   async getAll(): Promise<Usuario[]> {
     try {
-      const { data } = await ithakaApi.get<UsuarioBackendResponse[]>("/api/v1/usuarios/")
+      const { data } = await ithakaApi.get<UsuarioBackendResponse[]>("/usuarios/")
       console.log("Usuarios del backend:", data)
       const transformed = data.map(transformBackendToFrontend)
       console.log("Usuarios transformados:", transformed)
@@ -83,7 +83,7 @@ export const usuariosService = {
   },
 
   async getById(id: string): Promise<Usuario> {
-    const { data } = await ithakaApi.get<UsuarioBackendResponse>(`/api/v1/usuarios/${id}`)
+    const { data } = await ithakaApi.get<UsuarioBackendResponse>(`/usuarios/${id}`)
     return transformBackendToFrontend(data)
   },
 
@@ -100,7 +100,7 @@ export const usuariosService = {
       id_rol: rolToIdRol[payload.rol] || 4,
     }
 
-    const { data } = await ithakaApi.post<UsuarioBackendResponse>("/api/v1/usuarios/", dto)
+    const { data } = await ithakaApi.post<UsuarioBackendResponse>("/usuarios/", dto)
     return transformBackendToFrontend(data)
   },
 
@@ -125,16 +125,16 @@ export const usuariosService = {
       dto.password = payload.password
     }
 
-    const { data } = await ithakaApi.put<UsuarioBackendResponse>(`/api/v1/usuarios/${id}`, dto)
+    const { data } = await ithakaApi.put<UsuarioBackendResponse>(`/usuarios/${id}`, dto)
     return transformBackendToFrontend(data)
   },
 
   async delete(id: string) {
-    await ithakaApi.delete(`/api/v1/usuarios/${id}`)
+    await ithakaApi.delete(`/usuarios/${id}`)
   },
 
   async reactivate(id: string) {
-    const { data } = await ithakaApi.put<UsuarioBackendResponse>(`/api/v1/usuarios/${id}/reactivar`, {})
+    const { data } = await ithakaApi.put<UsuarioBackendResponse>(`/usuarios/${id}/reactivar`, {})
     return transformBackendToFrontend(data)
   },
 }
