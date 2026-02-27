@@ -45,6 +45,7 @@ export const useAuthStore = () => {
           name: data.usuario.nombre,
           role: data.usuario.rol,
           email: data.usuario.email,
+          id: data.usuario.id_usuario,
         }),
       );
     } catch (err) {
@@ -78,6 +79,7 @@ export const useAuthStore = () => {
           name: data.nombre,
           email: data.email,
           role: data.rol,
+          id: data.id_usuario,
         }),
       );
     } catch {

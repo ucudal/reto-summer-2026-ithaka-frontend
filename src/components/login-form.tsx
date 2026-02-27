@@ -154,7 +154,7 @@ export function LoginForm() {
               {/* Sign In Button */}
               <Button
                 type="submit"
-                disabled={!form.email || !form.password}
+                disabled={!form.email || !form.password || status === "checking"}
                 className="w-full h-10 text-base font-semibold"
               >
                 {status === "checking" ? t("login.signing") : t("login.signIn")}

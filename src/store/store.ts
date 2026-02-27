@@ -4,6 +4,7 @@ import { estadosSlice } from "./estados/estadosSlice";
 import { postulacionesSlice } from "./postulaciones/postulacionesSlice";
 import { proyectosSlice } from "./proyectos/proyectosSlice";
 import { evaluacionesSlice } from "./evaluaciones/evaluacionesSlice";
+import { notasSlice } from "./notas/notasSlice";
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     postulaciones: postulacionesSlice.reducer,
     proyectos: proyectosSlice.reducer,
     evaluaciones: evaluacionesSlice.reducer,
+    notas: notasSlice.reducer,
   },
 });
 
