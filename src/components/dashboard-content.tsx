@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
-import { Switch } from "@/src/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
 import {
   getEstadoPostulacionLabel,
   getEstadoProyectoLabel,
@@ -161,39 +161,34 @@ export function DashboardContent() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between gap-4">
-              <CardTitle className="text-base">
-                {estadoChartMode === "proyectos"
-                  ? t("dashboard.proyectosPorEstado")
-                  : t("dashboard.postulacionesPorEstado")}
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
+            <CardTitle className="text-base">Métricas por estados</CardTitle>
+            <Tabs
+              value={estadoChartMode}
+              onValueChange={(value) =>
+                setEstadoChartMode(value as EstadoChartMode)
+              }
+              className="mt-2"
+            >
+              <TabsList>
+                <TabsTrigger value="proyectos">
                   {t("dashboard.switchProyectos")}
-                </span>
-                <Switch
-                  checked={estadoChartMode === "postulaciones"}
-                  onCheckedChange={(checked) =>
-                    setEstadoChartMode(checked ? "postulaciones" : "proyectos")
-                  }
-                  aria-label={t("dashboard.switchEstados")}
-                />
-                <span className="text-xs text-muted-foreground">
+                </TabsTrigger>
+                <TabsTrigger value="postulaciones">
                   {t("dashboard.switchPostulaciones")}
-                </span>
-              </div>
-            </div>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </CardHeader>
           <CardContent>
             {estadoData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
+              <ResponsiveContainer width="100%" height={320}>
+                <PieChart margin={{ top: 20, right: 20, bottom: 8, left: 20 }}>
                   <Pie
                     data={estadoData}
                     cx="50%"
-                    cy="50%"
+                    cy="56%"
                     innerRadius={60}
-                    outerRadius={100}
+                    outerRadius={88}
                     paddingAngle={3}
                     dataKey="value"
                     label={({ name, value }) => `${name}: ${value}`}
