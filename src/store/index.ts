@@ -4,4 +4,5 @@ export * from "./postulaciones/postulacionesSlice";
 export * from "./proyectos/proyectosSlice";
 export * from "./evaluaciones/evaluacionesSlice";
 export * from "./notas/notasSlice";
+export * from "./apoyos/apoyosSlice";
 export * from "./store";
