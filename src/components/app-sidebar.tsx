@@ -12,11 +12,11 @@ import {
   ChevronRight,
   ClipboardCheck,
   FolderKanban,
+  HandHeart,
   Inbox,
   LayoutDashboard,
   Plus,
   Settings as SettingsIcon,
-  HandHeart,
   Users,
 } from "lucide-react";
 import Image from "next/image";
@@ -109,12 +109,9 @@ export function AppSidebar() {
             // Filtrar items según el rol
             let items = navItems;
             if (role === "tutor") {
-              // Tutor: Dashboard, Proyectos y Nueva Postulación
+              // Tutor: Dashboard y Proyectos
               items = navItems.filter(
-                (i) =>
-                  i.href === "/" ||
-                  i.href === "/proyectos" ||
-                  i.label === "nav.nuevaPostulacion",
+                (i) => i.href === "/" || i.href === "/proyectos",
               );
             } else if (role === "coordinador" || role === "operador") {
               // Coordinador: todo excepto Gestión de Usuarios
