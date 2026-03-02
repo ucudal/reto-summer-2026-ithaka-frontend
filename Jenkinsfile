@@ -5,6 +5,16 @@ pipeline {
 apiVersion: v1
 kind: Pod
 spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - node1
+            - node3
   containers:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:debug
