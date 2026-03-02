@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Logout from "@/public/logout.png";
 import { useRole } from "@/src/components/role-context";
 import { useSettings } from "@/src/components/settings-context";
@@ -31,14 +32,19 @@ function normalizeExternalUrl(url: string) {
   return `http://${url}`;
 }
 
-const navItems = [
+const navItems: {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  adminOnly?: boolean;
+  external?: boolean;
+}[] = [
   { href: "/", label: "nav.dashboard", icon: LayoutDashboard },
   { href: "/postulaciones", label: "nav.postulaciones", icon: Inbox },
   {
-    href: normalizeExternalUrl(env.NUEVA_POSTULACION_URL),
+    href: "/chatbot",
     label: "nav.nuevaPostulacion",
     icon: Plus,
-    external: true,
   },
   { href: "/proyectos", label: "nav.proyectos", icon: FolderKanban },
   { href: "/evaluaciones", label: "nav.evaluaciones", icon: ClipboardCheck },
