@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useCallback } from "react"
+import { StatusBadge } from "@/src/components/status-badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,18 +11,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/src/components/ui/alert-dialog"
-import type { Postulacion, TipoPostulante } from "@/src/lib/data"
-import { StatusBadge } from "@/src/components/status-badge"
-import { Card, CardContent } from "@/src/components/ui/card"
-import { Input } from "@/src/components/ui/input"
+} from "@/src/components/ui/alert-dialog";
+import { Button } from "@/src/components/ui/button";
+import { Card, CardContent } from "@/src/components/ui/card";
+import { Input } from "@/src/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/src/components/ui/select"
+} from "@/src/components/ui/select";
 import {
   Table,
   TableBody,
@@ -30,83 +29,101 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/src/components/ui/table"
-import { Search, Eye, Download } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/src/components/ui/button"
-import { useRouter } from "next/navigation"
-import { useI18n, getTipoPostulanteLabel, getEstadoPostulacionLabel, LOCALE_BY_LANG } from "@/src/lib/i18n"
-import { casosService } from "@/src/services/casos.service"
-import axios from "axios"
+} from "@/src/components/ui/table";
+import type { Postulacion, TipoPostulante } from "@/src/lib/data";
+import {
+  getEstadoPostulacionLabel,
+  getTipoPostulanteLabel,
+  LOCALE_BY_LANG,
+  useI18n,
+} from "@/src/lib/i18n";
+import { casosService } from "@/src/services/casos.service";
+import axios from "axios";
+import { Download, Eye, Search } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+
+const isKnownPostulacionEstado = (
+  estado: string,
+): estado is "borrador" | "recibida" =>
+  estado === "borrador" || estado === "recibida";
 
 export function PostulacionesList() {
-  const [postulaciones, setPostulaciones] = useState<Postulacion[]>([])
-  const [search, setSearch] = useState("")
-  const [filterEstado, setFilterEstado] = useState<string>("all")
-  const [filterFechaDesde, setFilterFechaDesde] = useState("")
-  const [filterFechaHasta, setFilterFechaHasta] = useState("")
-  const [filterConvocatoria, setFilterConvocatoria] = useState<string>("all")
-  const [filterCompletitud, setFilterCompletitud] = useState<string>("all")
-  const [loadingList, setLoadingList] = useState(false)
-  const [errorList, setErrorList] = useState<string | null>(null)
-  const router = useRouter()
-  const { t, lang } = useI18n()
+  const [postulaciones, setPostulaciones] = useState<Postulacion[]>([]);
+  const [search, setSearch] = useState("");
+  const [filterEstado, setFilterEstado] = useState<string>("all");
+  const [filterFechaDesde, setFilterFechaDesde] = useState("");
+  const [filterFechaHasta, setFilterFechaHasta] = useState("");
+  const [filterConvocatoria, setFilterConvocatoria] = useState<string>("all");
+  const [filterCompletitud, setFilterCompletitud] = useState<string>("all");
+  const [loadingList, setLoadingList] = useState(false);
+  const [errorList, setErrorList] = useState<string | null>(null);
+  const router = useRouter();
+  const { t, lang } = useI18n();
 
   const loadData = useCallback(async () => {
-    setLoadingList(true)
-    setErrorList(null)
+    setLoadingList(true);
+    setErrorList(null);
     try {
       const data = await casosService.getPostulaciones(
         filterEstado === "all" ? undefined : filterEstado,
-      )
-      setPostulaciones(data)
+      );
+      setPostulaciones(data);
     } catch (error) {
-      setPostulaciones([])
+      setPostulaciones([]);
       if (axios.isAxiosError(error)) {
-        const detail = error.response?.data?.detail
+        const detail = error.response?.data?.detail;
         setErrorList(
           typeof detail === "string"
             ? detail
             : "No se pudo cargar postulaciones desde el backend.",
-        )
+        );
       } else {
-        setErrorList("No se pudo cargar postulaciones desde el backend.")
+        setErrorList("No se pudo cargar postulaciones desde el backend.");
       }
     } finally {
-      setLoadingList(false)
+      setLoadingList(false);
     }
-  }, [filterEstado])
+  }, [filterEstado]);
 
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    loadData();
+  }, [loadData]);
 
   const filtered = postulaciones.filter((p) => {
     const matchSearch =
       p.nombreProyecto.toLowerCase().includes(search.toLowerCase()) ||
       p.nombrePostulante.toLowerCase().includes(search.toLowerCase()) ||
-      p.email.toLowerCase().includes(search.toLowerCase())
-    const created = new Date(p.creadoEn).getTime()
-    const from = filterFechaDesde ? new Date(`${filterFechaDesde}T00:00:00`).getTime() : null
-    const to = filterFechaHasta ? new Date(`${filterFechaHasta}T23:59:59`).getTime() : null
-    const matchFecha = (from === null || created >= from) && (to === null || created <= to)
+      p.email.toLowerCase().includes(search.toLowerCase());
+    const created = new Date(p.creadoEn).getTime();
+    const from = filterFechaDesde
+      ? new Date(`${filterFechaDesde}T00:00:00`).getTime()
+      : null;
+    const to = filterFechaHasta
+      ? new Date(`${filterFechaHasta}T23:59:59`).getTime()
+      : null;
+    const matchFecha =
+      (from === null || created >= from) && (to === null || created <= to);
     const matchConvocatoria =
-      filterConvocatoria === "all" || (p.convocatoria ?? "") === filterConvocatoria
+      filterConvocatoria === "all" ||
+      (p.convocatoria ?? "") === filterConvocatoria;
     const matchCompletitud =
-      filterCompletitud === "all" || (p.completitud ?? "incompleta") === filterCompletitud
-    return matchSearch && matchFecha && matchConvocatoria && matchCompletitud
-  })
+      filterCompletitud === "all" ||
+      (p.completitud ?? "incompleta") === filterCompletitud;
+    return matchSearch && matchFecha && matchConvocatoria && matchCompletitud;
+  });
 
   const convocatorias = Array.from(
     new Set(postulaciones.map((p) => p.convocatoria).filter(Boolean)),
-  ) as string[]
+  ) as string[];
 
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString(LOCALE_BY_LANG[lang], {
       day: "2-digit",
       month: "short",
       year: "numeric",
-    })
+    });
   }
 
   function exportToCSV() {
@@ -118,53 +135,70 @@ export function PostulacionesList() {
       t("postulaciones.estado"),
       t("proyectoDetail.descripcion"),
       t("postulaciones.fecha"),
-    ]
+    ];
     const rows = filtered.map((p) => [
       p.id,
       p.nombreProyecto,
       p.nombrePostulante,
       getTipoPostulanteLabel(lang, p.tipoPostulante as TipoPostulante),
-      getEstadoPostulacionLabel(lang, p.estado),
+      isKnownPostulacionEstado(p.estado)
+        ? getEstadoPostulacionLabel(lang, p.estado)
+        : p.estado,
       p.descripcion ?? "",
       formatDate(p.creadoEn),
-    ])
-    const escape = (v: string) => `"${String(v).replace(/"/g, '""')}"`
-    const csv = [headers, ...rows].map((r) => r.map(escape).join(",")).join("\n")
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `postulaciones_${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    ]);
+    const escape = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
+    const csv = [headers, ...rows]
+      .map((r) => r.map(escape).join(","))
+      .join("\n");
+    const blob = new Blob(["\uFEFF" + csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `postulaciones_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
     <div className="p-6 lg:p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{t("postulaciones.title")}</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            {t("postulaciones.title")}
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {t("postulaciones.subtitle")}
           </p>
         </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="outline" size="sm" disabled={filtered.length === 0}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={filtered.length === 0}
+            >
               <Download className="h-4 w-4 mr-2" />
               {t("postulaciones.exportarCSV")}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>{t("postulaciones.exportarCSVTitulo")}</AlertDialogTitle>
+              <AlertDialogTitle>
+                {t("postulaciones.exportarCSVTitulo")}
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                {t("postulaciones.exportarCSVDescripcion")} {filtered.length} {t("postulaciones.exportarCSVRegistros")}.
+                {t("postulaciones.exportarCSVDescripcion")} {filtered.length}{" "}
+                {t("postulaciones.exportarCSVRegistros")}.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>{t("common.cancelar")}</AlertDialogCancel>
-              <AlertDialogAction onClick={exportToCSV}>{t("postulaciones.exportarCSV")}</AlertDialogAction>
+              <AlertDialogAction onClick={exportToCSV}>
+                {t("postulaciones.exportarCSV")}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -188,9 +222,15 @@ export function PostulacionesList() {
                 <SelectValue placeholder={t("postulaciones.estado")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t("postulaciones.todosEstados")}</SelectItem>
-                <SelectItem value="borrador">{getEstadoPostulacionLabel(lang, "borrador")}</SelectItem>
-                <SelectItem value="recibida">{getEstadoPostulacionLabel(lang, "recibida")}</SelectItem>
+                <SelectItem value="all">
+                  {t("postulaciones.todosEstados")}
+                </SelectItem>
+                <SelectItem value="borrador">
+                  {getEstadoPostulacionLabel(lang, "borrador")}
+                </SelectItem>
+                <SelectItem value="recibida">
+                  {getEstadoPostulacionLabel(lang, "recibida")}
+                </SelectItem>
               </SelectContent>
             </Select>
             <Input
@@ -205,7 +245,10 @@ export function PostulacionesList() {
               onChange={(e) => setFilterFechaHasta(e.target.value)}
               className="w-full sm:w-44"
             />
-            <Select value={filterConvocatoria} onValueChange={setFilterConvocatoria}>
+            <Select
+              value={filterConvocatoria}
+              onValueChange={setFilterConvocatoria}
+            >
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Convocatoria" />
               </SelectTrigger>
@@ -218,7 +261,10 @@ export function PostulacionesList() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filterCompletitud} onValueChange={setFilterCompletitud}>
+            <Select
+              value={filterCompletitud}
+              onValueChange={setFilterCompletitud}
+            >
               <SelectTrigger className="w-full sm:w-44">
                 <SelectValue placeholder="Completitud" />
               </SelectTrigger>
@@ -244,19 +290,27 @@ export function PostulacionesList() {
                 <TableHead>{t("postulaciones.tipo")}</TableHead>
                 <TableHead>{t("postulaciones.estado")}</TableHead>
                 <TableHead>{t("postulaciones.fecha")}</TableHead>
-                <TableHead className="text-right">{t("postulaciones.acciones")}</TableHead>
+                <TableHead className="text-right">
+                  {t("postulaciones.acciones")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loadingList ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={7}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     Cargando postulaciones...
                   </TableCell>
                 </TableRow>
               ) : errorList ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-destructive">
+                  <TableCell
+                    colSpan={7}
+                    className="text-center py-8 text-destructive"
+                  >
                     {errorList}
                   </TableCell>
                 </TableRow>
@@ -278,7 +332,9 @@ export function PostulacionesList() {
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       {p.id}
                     </TableCell>
-                    <TableCell className="font-medium">{p.nombreProyecto}</TableCell>
+                    <TableCell className="font-medium">
+                      {p.nombreProyecto}
+                    </TableCell>
                     <TableCell>
                       <div>
                         <span className="text-sm">{p.nombrePostulante}</span>
@@ -290,7 +346,10 @@ export function PostulacionesList() {
                     </TableCell>
                     <TableCell>
                       <span className="text-xs">
-                        {getTipoPostulanteLabel(lang, p.tipoPostulante as TipoPostulante)}
+                        {getTipoPostulanteLabel(
+                          lang,
+                          p.tipoPostulante as TipoPostulante,
+                        )}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -299,7 +358,10 @@ export function PostulacionesList() {
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDate(p.creadoEn)}
                     </TableCell>
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <TableCell
+                      className="text-right"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Link href={`/postulaciones/${p.id}`}>
                         <Button size="sm" variant="outline">
                           <Eye className="h-3 w-3 mr-1" />
@@ -315,5 +377,5 @@ export function PostulacionesList() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
