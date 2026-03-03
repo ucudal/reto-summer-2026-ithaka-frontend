@@ -136,22 +136,6 @@ export function LoginForm() {
                 </div>
               </div>
 
-              {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember"
-                    checked={form.rememberMe}
-                    onCheckedChange={(checked) =>
-                      update("rememberMe", !!checked)
-                    }
-                  />
-                  <Label htmlFor="remember" className="cursor-pointer">
-                    {t("login.remember")}
-                  </Label>
-                </div>
-              </div>
-
               {/* Sign In Button */}
               <Button
                 type="submit"
