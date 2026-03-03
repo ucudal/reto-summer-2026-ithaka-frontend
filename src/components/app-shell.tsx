@@ -55,9 +55,42 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (status === "checking") return; // no redirigir mientras se comprueba
+
+    if (status === "not-authenticated" || !user) {
+      router.replace("/login");
+    }
+  }, [status, user, router]);
+
+  // useEffect(() => {
+  //   if (status === "authenticated" && user) {
+  //     const raw = (user.role || "").toString().toLowerCase();
+  //     const valid: AppRole[] = ["admin", "coordinador", "tutor", "operador"];
+  //     if (valid.includes(raw as any)) {
+  //       const normalizedRole = raw as AppRole;
+  //       setRole(normalizedRole);
+
+  //       if (
+  //         (normalizedRole === "tutor" || normalizedRole === "coordinador") &&
+  //         !isPathAllowedForRole(pathname, normalizedRole)
+  //       ) {
+  //         router.replace("/");
+  //       }
+  //     } else {
+  //       console.warn("app-shell: unexpected role from auth store", user.role);
+  //       router.replace("/login");
+  //     }
+  //   } else if (status === "not-authenticated" || !user) {
+  //     router.replace("/login");
+  //   }
+  // }, [status, user, pathname, router, setRole]);
+
+  // useEffect separado para validar rutas
+  useEffect(() => {
     if (status === "authenticated" && user) {
       const raw = (user.role || "").toString().toLowerCase();
       const valid: AppRole[] = ["admin", "coordinador", "tutor", "operador"];
+      
       if (valid.includes(raw as any)) {
         const normalizedRole = raw as AppRole;
         setRole(normalizedRole);
@@ -68,14 +101,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ) {
           router.replace("/");
         }
-      } else {
-        console.warn("app-shell: unexpected role from auth store", user.role);
-        router.replace("/login");
       }
-    } else if (status === "not-authenticated" || !user) {
-      router.replace("/login");
     }
-  }, [status, user, pathname, router, setRole]);
+  }, [status, user, pathname, setRole, router]);
+
+  if (status === "checking") {
+    return null; // mostrar loading mientras se verifica
+  }
 
   if (status !== "authenticated" || !user) {
     return null;
