@@ -211,7 +211,7 @@ export function AppSidebar() {
         <button
           onClick={handleToggle}
           className={cn(
-            "absolute bottom-1/3 translate-x-1/2 -translate-y-1/2 z-50",
+            "absolute bottom-1/4 translate-x-1/2 -translate-y-1/2 z-50",
             "rounded-full border bg-sidebar p-2 shadow-md",
           )}
           aria-label={isCompact ? t("sidebar.expand") : t("sidebar.collapse")}
