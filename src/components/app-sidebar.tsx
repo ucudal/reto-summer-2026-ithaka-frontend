@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Logout from "@/public/logout.png";
 import { useRole } from "@/src/components/role-context";
 import { useSettings } from "@/src/components/settings-context";
@@ -23,7 +22,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import React, { useState } from "react";
 
 function normalizeExternalUrl(url: string) {
   if (/^https?:\/\//i.test(url)) {
@@ -42,9 +41,10 @@ const navItems: {
   { href: "/", label: "nav.dashboard", icon: LayoutDashboard },
   { href: "/postulaciones", label: "nav.postulaciones", icon: Inbox },
   {
-    href: "/chatbot",
+    href: normalizeExternalUrl(env.NUEVA_POSTULACION_URL),
     label: "nav.nuevaPostulacion",
     icon: Plus,
+    external: true,
   },
   { href: "/proyectos", label: "nav.proyectos", icon: FolderKanban },
   { href: "/evaluaciones", label: "nav.evaluaciones", icon: ClipboardCheck },
