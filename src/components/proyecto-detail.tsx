@@ -26,6 +26,14 @@ import { useEffect, useState } from "react";
 import { toast } from "../hooks/use-toast";
 import { useTutoresStore } from "../hooks/useTutoresStore";
 
+const normalizeEstado = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_");
+
 export function ProyectoDetail({ id }: { id: string }) {
   type ProyectoView = Omit<Proyecto, "estado"> & {
     estado: string;
@@ -94,6 +102,15 @@ export function ProyectoDetail({ id }: { id: string }) {
     ? mapCasoToProyecto(selectedProyecto)
     : null;
 
+  const estadoActual = String(proyecto?.estado ?? "").trim();
+  const pendingEstadoValue = String(pendingEstado ?? "").trim();
+  const estadoSeleccionado = estadoOptions.find(
+    (estado) =>
+      normalizeEstado(estado.value) ===
+      normalizeEstado(pendingEstadoValue || estadoActual),
+  );
+  const selectedEstadoValue = estadoSeleccionado?.value ?? "";
+
   useEffect(() => {
     fetchProyecto(id);
   }, [fetchProyecto, id]);
@@ -147,7 +164,8 @@ export function ProyectoDetail({ id }: { id: string }) {
 
   async function handleGuardarCambios() {
     const willChangeEstado =
-      pendingEstado && pendingEstado !== proyecto?.estado;
+      Boolean(selectedEstadoValue) &&
+      normalizeEstado(selectedEstadoValue) !== normalizeEstado(estadoActual);
     const willChangeResponsable =
       responsableSeleccionado !== proyecto?.responsableId;
 
@@ -157,7 +175,7 @@ export function ProyectoDetail({ id }: { id: string }) {
       setSavingEstado(true);
 
       if (willChangeEstado) {
-        await updateProyectoEstado(id, pendingEstado);
+        await updateProyectoEstado(id, selectedEstadoValue);
       }
 
       if (willChangeResponsable) {
@@ -212,7 +230,9 @@ export function ProyectoDetail({ id }: { id: string }) {
             onClick={handleGuardarCambios}
             disabled={
               savingEstado ||
-              ((!pendingEstado || pendingEstado === proyecto.estado) &&
+              ((!selectedEstadoValue ||
+                normalizeEstado(selectedEstadoValue) ===
+                  normalizeEstado(estadoActual)) &&
                 responsableSeleccionado === proyecto.responsableId)
             }
           >
@@ -284,7 +304,7 @@ export function ProyectoDetail({ id }: { id: string }) {
           </CardHeader>
           <CardContent>
             <Select
-              value={pendingEstado || proyecto.estado}
+              value={selectedEstadoValue}
               onValueChange={handleEstadoChange}
             >
               <SelectTrigger disabled={estadoOptions.length === 0}>
