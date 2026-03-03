@@ -41,7 +41,7 @@ const navItems: {
   { href: "/", label: "nav.dashboard", icon: LayoutDashboard },
   { href: "/postulaciones", label: "nav.postulaciones", icon: Inbox },
   {
-    href: normalizeExternalUrl(env.NUEVA_POSTULACION_URL),
+    href: "/chatbot",
     label: "nav.nuevaPostulacion",
     icon: Plus,
     external: true,
