@@ -30,6 +30,7 @@ const formatCountdown = (milliseconds: number) => {
 
 export function SessionRefreshManager() {
   const { status, startRefreshToken, startLogout } = useAuthStore();
+  
 
   const [millisecondsLeft, setMillisecondsLeft] = useState<number | null>(null);
   const [declinedCurrentCycle, setDeclinedCurrentCycle] = useState(false);
@@ -125,8 +126,8 @@ export function SessionRefreshManager() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isRefreshing}>
-            No, continuar sin extender
+          <AlertDialogCancel disabled={isRefreshing} onClick={() => startLogout()}>
+            No, cerrar sesion
           </AlertDialogCancel>
           <AlertDialogAction
             disabled={isRefreshing}
