@@ -12,17 +12,24 @@ import {
 import { Checkbox } from "@/src/components/ui/checkbox";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
+import { useI18n } from "@/src/lib/i18n";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect } from "react";
-import { useI18n } from "@/src/lib/i18n";
+import React, { useEffect, useState } from "react";
 import { useAuthStore } from "../hooks/useAuthStore";
 
 export function LoginForm() {
   const router = useRouter();
   const { setRole } = useRole();
   const { t } = useI18n();
-  const { startLogin, checkAuthToken, status, user, errorMessage } = useAuthStore();
+  const {
+    startLogin,
+    clearLoginError,
+    checkAuthToken,
+    status,
+    user,
+    errorMessage,
+  } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     email: "",
@@ -56,14 +63,10 @@ export function LoginForm() {
     }
   }, [status, user, router, setRole]);
 
-  // Mostrar errores del backend
-  useEffect(() => {
-    if (errorMessage) {
-      alert(errorMessage);
-    }
-  }, [errorMessage]);
-
   function update(field: string, value: string | boolean) {
+    if (errorMessage) {
+      clearLoginError();
+    }
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -90,9 +93,7 @@ export function LoginForm() {
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>{t("login.signIn")}</CardTitle>
-            <CardDescription>
-              {t("login.description")}
-            </CardDescription>
+            <CardDescription>{t("login.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-6">
@@ -154,11 +155,22 @@ export function LoginForm() {
               {/* Sign In Button */}
               <Button
                 type="submit"
-                disabled={!form.email || !form.password || status === "checking"}
+                disabled={
+                  !form.email || !form.password || status === "checking"
+                }
                 className="w-full h-10 text-base font-semibold"
               >
                 {status === "checking" ? t("login.signing") : t("login.signIn")}
               </Button>
+
+              {errorMessage ? (
+                <p
+                  role="alert"
+                  className="text-sm text-destructive text-center"
+                >
+                  {errorMessage}
+                </p>
+              ) : null}
             </form>
           </CardContent>
         </Card>

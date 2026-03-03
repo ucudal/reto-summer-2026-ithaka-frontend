@@ -70,13 +70,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
       } else {
         console.warn("app-shell: unexpected role from auth store", user.role);
+        router.replace("/login");
       }
-    } else if (status === "not-authenticated") {
-      router.push("/login");
+    } else if (status === "not-authenticated" || !user) {
+      router.replace("/login");
     }
   }, [status, user, pathname, router, setRole]);
 
-  if (status !== "authenticated") {
+  if (status !== "authenticated" || !user) {
     return null;
   }
 

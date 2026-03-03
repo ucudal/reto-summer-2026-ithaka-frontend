@@ -1,10 +1,10 @@
 "use client";
 
-import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { ithakaApi } from "../api";
 import {
   AppDispatch,
+  clearErrorMessage,
   onChecking,
   onLogin,
   onLogout,
@@ -36,6 +36,9 @@ interface LoginCredentials {
   email: string;
   password: string;
 }
+
+const LOGIN_ERROR_MESSAGE =
+  "No se pudo iniciar sesión. Verificá tus credenciales.";
 
 export const useAuthStore = () => {
   const { status, user, errorMessage } = useSelector(
@@ -89,17 +92,13 @@ export const useAuthStore = () => {
           id: data.usuario.id_usuario,
         }),
       );
-    } catch (err) {
-      let message = "Credenciales incorrectas";
-
-      if (axios.isAxiosError(err)) {
-        message = err.response?.data?.detail ?? message;
-      } else if (err instanceof Error) {
-        message = err.message || message;
-      }
-
-      dispatch(onLogout(message));
+    } catch {
+      dispatch(onLogout(LOGIN_ERROR_MESSAGE));
     }
+  };
+
+  const clearLoginError = () => {
+    dispatch(clearErrorMessage());
   };
 
   const checkAuthToken = async () => {
@@ -233,6 +232,7 @@ export const useAuthStore = () => {
     errorMessage,
 
     startLogin,
+    clearLoginError,
     checkAuthToken,
     startRefreshToken,
     startLogout,
