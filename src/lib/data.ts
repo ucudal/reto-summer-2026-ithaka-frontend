@@ -179,6 +179,28 @@ export const COMUNIDAD_LABELS: Record<TipoComunidad, string> = {
 /*
 borrar, ya toma de la base
 
+export const ROL_LABELS: Record<Rol, string> = {
+  admin: "Administrador",
+  tutor: "Tutor",
+  coordinador: "Coordinador",
+  operador: "Operador",
+}
+
+export const ESTADO_USUARIO_LABELS: Record<EstadoUsuario, string> = {
+  activo: "Activo",
+  inactivo: "Inactivo",
+}
+
+export const COMUNIDAD_LABELS: Record<TipoComunidad, string> = {
+  docente_funcionario: "Docente/Funcionario UCU",
+  alumni: "Alumni",
+  estudiante: "Estudiante",
+  externo: "Externo",
+}
+
+/*
+borrar, ya toma de la base
+
 export const RESPONSABLES_ITHAKA = [
   "Ana Garcia",
   "Carlos Rodriguez",
