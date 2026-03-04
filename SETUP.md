@@ -28,6 +28,15 @@ npm install -g pnpm
 pnpm install
 ```
 
+### 3.1 Configurar variables de entorno
+
+Crea un archivo `.env.local` en la raíz del proyecto con:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_NUEVA_POSTULACION_URL=localhost:5371
+```
+
 ### 4. Levantar el servidor de desarrollo
 
 ```bash
@@ -37,6 +46,7 @@ pnpm dev
 ### 5. Acceder a la aplicación
 
 Abre tu navegador en:
+
 - **Local**: http://localhost:3000
 - **Red**: http://192.168.56.1:3000 (o la IP de tu máquina)
 
@@ -80,6 +90,7 @@ pnpm lint
 ## 📞 Soporte
 
 Para dudas, consulta la estructura del proyecto:
+
 - `/app` - Rutas y pages de Next.js
 - `/components` - Componentes React reutilizables
 - `/lib` - Utilidades y store de datos

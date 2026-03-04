@@ -2,120 +2,124 @@
 // Ithaka Backoffice PoC — In-memory data store
 // =============================================================================
 
-import { ithakaApi } from "../api"
+import { ithakaApi } from "../api";
 
 export type TipoPostulante =
   | "estudiante_ucu"
   | "alumni"
   | "docente_funcionario"
-  | "externo"
+  | "externo";
 
-export type EstadoPostulacion = "borrador" | "recibida"
+export type EstadoPostulacion = "borrador" | "recibida";
 
 export type EstadoProyecto =
   | "recibida"
   | "en_evaluacion"
   | "proyecto_activo"
   | "incubado"
-  | "cerrado"
+  | "cerrado";
 
 export type TipoApoyo =
   | "validalab"
   | "eolo"
   | "mentoria"
   | "tfg"
-  | "incubadora_ulises"
+  | "incubadora_ulises";
 
-export type EstadoApoyo = "activo" | "finalizado"
+export type EstadoApoyo = "activo" | "finalizado";
 
-export type Rol = "admin" | "tutor" | "coordinador" | "operador"
+export type Rol = "admin" | "tutor" | "coordinador" | "operador";
 
-export type EstadoUsuario = "activo" | "inactivo"
+export type EstadoUsuario = "activo" | "inactivo";
 
-export type TipoComunidad = "docente_funcionario" | "alumni" | "estudiante" | "externo"
+export type TipoComunidad =
+  | "docente_funcionario"
+  | "alumni"
+  | "estudiante"
+  | "externo";
 
 // --------------- Entities ---------------
 
 export interface Usuario {
-  id: string
-  nombre: string
-  email: string
-  rol: Rol
-  comunidad: TipoComunidad
-  estado: EstadoUsuario
-  fotoPerfil: string
-  ultimoAcceso: string
-  creadoEn: string
-  actualizadoEn: string
+  id: string;
+  nombre: string;
+  email: string;
+  rol: Rol;
+  comunidad: TipoComunidad;
+  estado: EstadoUsuario;
+  fotoPerfil: string;
+  ultimoAcceso: string;
+  creadoEn: string;
+  actualizadoEn: string;
 }
 
 export interface Postulacion {
-  id: string
-  nombreProyecto: string
-  nombrePostulante: string
-  email: string
-  tipoPostulante: TipoPostulante
-  descripcion: string
-  notas: string
-  estado: EstadoPostulacion
-  convocatoria?: string
-  completitud?: "completa" | "incompleta"
-  creadoEn: string
-  actualizadoEn: string
+  id: string;
+  nombreProyecto: string;
+  nombrePostulante: string;
+  email: string;
+  tipoPostulante: TipoPostulante;
+  descripcion: string;
+  notas: string;
+  estado: string;
+  convocatoria?: string;
+  completitud?: "completa" | "incompleta";
+  creadoEn: string;
+  actualizadoEn: string;
 }
 
 export interface Evaluacion {
-  id: string
-  proyectoId: string
-  etapaEmprendimiento: string
-  potencialIncubacion: "alto" | "medio" | "bajo"
-  pertenenciaUCU: boolean
-  notas: string
-  creadoEn: string
-  actualizadoEn: string
+  id: string;
+  proyectoId: string;
+  etapaEmprendimiento: string;
+  potencialIncubacion: "alto" | "medio" | "bajo";
+  pertenenciaUCU: boolean;
+  notas: string;
+  creadoEn: string;
+  actualizadoEn: string;
 }
 
 export interface Apoyo {
-  id: string
-  proyectoId: string
-  tipo: TipoApoyo
-  estado: EstadoApoyo
-  fechaInicio: string
-  fechaFin?: string
+  id: string;
+  proyectoId: string;
+  tipo: TipoApoyo;
+  estado: EstadoApoyo;
+  fechaInicio: string;
+  fechaFin?: string;
 }
 
 export interface Hito {
-  id: string
-  proyectoId: string
-  titulo: string
-  completado: boolean
+  id: string;
+  proyectoId: string;
+  titulo: string;
+  completado: boolean;
 }
 
 export interface Proyecto {
-  id: string
-  postulacionId: string
-  nombreProyecto: string
-  nombrePostulante: string
-  email: string
-  tipoPostulante: TipoPostulante
-  descripcion: string
-  estado: EstadoProyecto
-  responsableIthaka: string
-  apoyos: Apoyo[]
-  hitos: Hito[]
-  evaluacion?: Evaluacion
-  creadoEn: string
-  actualizadoEn: string
+  id: string;
+  postulacionId: string;
+  nombreProyecto: string;
+  nombrePostulante: string;
+  email: string;
+  tipoPostulante: TipoPostulante;
+  descripcion: string;
+  estado: EstadoProyecto;
+  responsableIthaka: string;
+  apoyos: Apoyo[];
+  hitos: Hito[];
+  evaluacion?: Evaluacion;
+  creadoEn: string;
+  actualizadoEn: string;
 }
 
 export interface AuditEntry {
-  id: string
-  entidadTipo: "postulacion" | "proyecto"
-  entidadId: string
-  accion: string
-  detalle: string
-  usuario: string
-  fecha: string
+  id: string;
+  entidadTipo: "postulacion" | "proyecto";
+  entidadId: string;
+  accion: string;
+  detalle: string;
+  usuario: string;
+  fecha: string;
 }
 
 // --------------- Labels & catalogs ---------------
@@ -125,12 +129,12 @@ export const TIPO_POSTULANTE_LABELS: Record<TipoPostulante, string> = {
   alumni: "Alumni",
   docente_funcionario: "Docente/Funcionario UCU",
   externo: "Externo",
-}
+};
 
 export const ESTADO_POSTULACION_LABELS: Record<EstadoPostulacion, string> = {
   borrador: "Borrador",
   recibida: "Recibida",
-}
+};
 
 export const ESTADO_PROYECTO_LABELS: Record<EstadoProyecto, string> = {
   recibida: "Recibida",
@@ -138,7 +142,7 @@ export const ESTADO_PROYECTO_LABELS: Record<EstadoProyecto, string> = {
   proyecto_activo: "Proyecto activo",
   incubado: "Incubado",
   cerrado: "Cerrado",
-}
+};
 
 export const TIPO_APOYO_LABELS: Record<TipoApoyo, string> = {
   validalab: "ValidaLab",
@@ -146,12 +150,34 @@ export const TIPO_APOYO_LABELS: Record<TipoApoyo, string> = {
   mentoria: "Mentoria",
   tfg: "TFG",
   incubadora_ulises: "Incubadora Ulises",
-}
+};
 
 export const ESTADO_APOYO_LABELS: Record<EstadoApoyo, string> = {
   activo: "Activo",
   finalizado: "Finalizado",
-}
+};
+
+export const ROL_LABELS: Record<Rol, string> = {
+  admin: "Administrador",
+  tutor: "Tutor",
+  coordinador: "Coordinador",
+  operador: "Operador",
+};
+
+export const ESTADO_USUARIO_LABELS: Record<EstadoUsuario, string> = {
+  activo: "Activo",
+  inactivo: "Inactivo",
+};
+
+export const COMUNIDAD_LABELS: Record<TipoComunidad, string> = {
+  docente_funcionario: "Docente/Funcionario UCU",
+  alumni: "Alumni",
+  estudiante: "Estudiante",
+  externo: "Externo",
+};
+
+/*
+borrar, ya toma de la base
 
 export const ROL_LABELS: Record<Rol, string> = {
   admin: "Administrador",
@@ -186,17 +212,17 @@ export const RESPONSABLES_ITHAKA = [
 
 // --------------- Seed data ---------------
 
-let nextId = 100
+let nextId = 100;
 
 function genId() {
-  nextId++
-  return `ITH-${String(nextId).padStart(4, "0")}`
+  nextId++;
+  return `ITH-${String(nextId).padStart(4, "0")}`;
 }
 
 function daysAgo(n: number) {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return d.toISOString()
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString();
 }
 
 const seedUsuarios: Usuario[] = [
@@ -207,7 +233,8 @@ const seedUsuarios: Usuario[] = [
     rol: "admin",
     comunidad: "docente_funcionario",
     estado: "activo",
-    fotoPerfil: "https://ui-avatars.com/api/?name=Ana+García&background=354558&color=fff&bold=true",
+    fotoPerfil:
+      "https://ui-avatars.com/api/?name=Ana+García&background=354558&color=fff&bold=true",
     ultimoAcceso: daysAgo(0),
     creadoEn: daysAgo(60),
     actualizadoEn: daysAgo(5),
@@ -219,7 +246,8 @@ const seedUsuarios: Usuario[] = [
     rol: "coordinador",
     comunidad: "docente_funcionario",
     estado: "activo",
-    fotoPerfil: "https://ui-avatars.com/api/?name=Carlos+Rodríguez&background=354558&color=fff&bold=true",
+    fotoPerfil:
+      "https://ui-avatars.com/api/?name=Carlos+Rodríguez&background=354558&color=fff&bold=true",
     ultimoAcceso: daysAgo(1),
     creadoEn: daysAgo(50),
     actualizadoEn: daysAgo(2),
@@ -231,7 +259,8 @@ const seedUsuarios: Usuario[] = [
     rol: "coordinador",
     comunidad: "docente_funcionario",
     estado: "activo",
-    fotoPerfil: "https://ui-avatars.com/api/?name=María+López&background=354558&color=fff&bold=true",
+    fotoPerfil:
+      "https://ui-avatars.com/api/?name=María+López&background=354558&color=fff&bold=true",
     ultimoAcceso: daysAgo(2),
     creadoEn: daysAgo(45),
     actualizadoEn: daysAgo(3),
@@ -243,7 +272,8 @@ const seedUsuarios: Usuario[] = [
     rol: "tutor",
     comunidad: "alumni",
     estado: "activo",
-    fotoPerfil: "https://ui-avatars.com/api/?name=Juan+Martínez&background=354558&color=fff&bold=true",
+    fotoPerfil:
+      "https://ui-avatars.com/api/?name=Juan+Martínez&background=354558&color=fff&bold=true",
     ultimoAcceso: daysAgo(3),
     creadoEn: daysAgo(30),
     actualizadoEn: daysAgo(1),
@@ -255,7 +285,8 @@ const seedUsuarios: Usuario[] = [
     rol: "tutor",
     comunidad: "docente_funcionario",
     estado: "activo",
-    fotoPerfil: "https://ui-avatars.com/api/?name=Laura+Fernández&background=354558&color=fff&bold=true",
+    fotoPerfil:
+      "https://ui-avatars.com/api/?name=Laura+Fernández&background=354558&color=fff&bold=true",
     ultimoAcceso: daysAgo(4),
     creadoEn: daysAgo(25),
     actualizadoEn: daysAgo(8),
@@ -267,7 +298,8 @@ const seedUsuarios: Usuario[] = [
     rol: "tutor",
     comunidad: "alumni",
     estado: "activo",
-    fotoPerfil: "https://ui-avatars.com/api/?name=Roberto+Silva&background=354558&color=fff&bold=true",
+    fotoPerfil:
+      "https://ui-avatars.com/api/?name=Roberto+Silva&background=354558&color=fff&bold=true",
     ultimoAcceso: daysAgo(5),
     creadoEn: daysAgo(15),
     actualizadoEn: daysAgo(10),
@@ -279,12 +311,13 @@ const seedUsuarios: Usuario[] = [
     rol: "coordinador",
     comunidad: "docente_funcionario",
     estado: "inactivo",
-    fotoPerfil: "https://ui-avatars.com/api/?name=Patricia+Gómez&background=354558&color=fff&bold=true",
+    fotoPerfil:
+      "https://ui-avatars.com/api/?name=Patricia+Gómez&background=354558&color=fff&bold=true",
     ultimoAcceso: daysAgo(30),
     creadoEn: daysAgo(20),
     actualizadoEn: daysAgo(7),
   },
-]
+];
 
 const seedPostulaciones: Postulacion[] = [
   {
@@ -339,7 +372,7 @@ const seedPostulaciones: Postulacion[] = [
     creadoEn: daysAgo(8),
     actualizadoEn: daysAgo(7),
   },
-]
+];
 
 const seedProyectos: Proyecto[] = [
   {
@@ -543,7 +576,8 @@ const seedProyectos: Proyecto[] = [
       etapaEmprendimiento: "Ideacion",
       potencialIncubacion: "bajo",
       pertenenciaUCU: false,
-      notas: "El equipo decidio no continuar con el proyecto tras la entrega del TFG.",
+      notas:
+        "El equipo decidio no continuar con el proyecto tras la entrega del TFG.",
       creadoEn: daysAgo(190),
       actualizadoEn: daysAgo(140),
     },
@@ -566,7 +600,7 @@ const seedProyectos: Proyecto[] = [
     creadoEn: daysAgo(3),
     actualizadoEn: daysAgo(3),
   },
-]
+];
 
 const seedAuditLog: AuditEntry[] = [
   {
@@ -605,97 +639,119 @@ const seedAuditLog: AuditEntry[] = [
     usuario: "Carlos Rodriguez",
     fecha: daysAgo(45),
   },
-]
+];
 
 // --------------- Store singleton ---------------
 
 class IthakaStore {
-  postulaciones: Postulacion[] = [...seedPostulaciones]
-  proyectos: Proyecto[] = [...seedProyectos]
-  auditLog: AuditEntry[] = [...seedAuditLog]
-  usuarios: Usuario[] = [...seedUsuarios]
+  postulaciones: Postulacion[] = [...seedPostulaciones];
+  proyectos: Proyecto[] = [...seedProyectos];
+  auditLog: AuditEntry[] = [...seedAuditLog];
+  usuarios: Usuario[] = [...seedUsuarios];
 
   // --- Usuarios ---
   getUsuarios() {
-    return this.usuarios
+    return this.usuarios;
   }
   getUsuario(id: string) {
-    return this.usuarios.find((u) => u.id === id)
+    return this.usuarios.find((u) => u.id === id);
   }
   addUsuario(data: Omit<Usuario, "id" | "creadoEn" | "actualizadoEn">) {
-    const now = new Date().toISOString()
-    const u: Usuario = { ...data, id: genId(), creadoEn: now, actualizadoEn: now }
-    this.usuarios.unshift(u)
-    return u
+    const now = new Date().toISOString();
+    const u: Usuario = {
+      ...data,
+      id: genId(),
+      creadoEn: now,
+      actualizadoEn: now,
+    };
+    this.usuarios.unshift(u);
+    return u;
   }
   updateUsuario(id: string, data: Partial<Omit<Usuario, "id" | "creadoEn">>) {
-    const u = this.getUsuario(id)
+    const u = this.getUsuario(id);
     if (u) {
-      Object.assign(u, data, { actualizadoEn: new Date().toISOString() })
+      Object.assign(u, data, { actualizadoEn: new Date().toISOString() });
     }
-    return u
+    return u;
   }
   toggleUsuarioEstado(id: string) {
-    const u = this.getUsuario(id)
+    const u = this.getUsuario(id);
     if (u) {
-      u.estado = u.estado === "activo" ? "inactivo" : "activo"
-      u.actualizadoEn = new Date().toISOString()
+      u.estado = u.estado === "activo" ? "inactivo" : "activo";
+      u.actualizadoEn = new Date().toISOString();
     }
-    return u
+    return u;
   }
   deleteUsuario(id: string) {
-    const index = this.usuarios.findIndex((u) => u.id === id)
+    const index = this.usuarios.findIndex((u) => u.id === id);
     if (index > -1) {
-      this.usuarios.splice(index, 1)
-      return true
+      this.usuarios.splice(index, 1);
+      return true;
     }
-    return false
+    return false;
   }
 
   // --- Postulaciones ---
   getPostulaciones() {
-    return this.postulaciones
+    return this.postulaciones;
   }
   getPostulacion(id: string) {
-    return this.postulaciones.find((p) => p.id === id)
+    return this.postulaciones.find((p) => p.id === id);
   }
   addPostulacion(data: Omit<Postulacion, "id" | "creadoEn" | "actualizadoEn">) {
-    const now = new Date().toISOString()
-    const p: Postulacion = { ...data, id: genId(), creadoEn: now, actualizadoEn: now }
-    this.postulaciones.unshift(p)
-    return p
+    const now = new Date().toISOString();
+    const p: Postulacion = {
+      ...data,
+      id: genId(),
+      creadoEn: now,
+      actualizadoEn: now,
+    };
+    this.postulaciones.unshift(p);
+    return p;
   }
   updatePostulacionEstado(id: string, estado: EstadoPostulacion) {
-    const p = this.getPostulacion(id)
+    const p = this.getPostulacion(id);
     if (p) {
-      const oldEstado = p.estado
-      p.estado = estado
-      p.actualizadoEn = new Date().toISOString()
-      this.addAudit("postulacion", id, "Cambio de estado", `${oldEstado} -> ${estado}`, "Sistema")
+      const oldEstado = p.estado;
+      p.estado = estado;
+      p.actualizadoEn = new Date().toISOString();
+      this.addAudit(
+        "postulacion",
+        id,
+        "Cambio de estado",
+        `${oldEstado} -> ${estado}`,
+        "Sistema",
+      );
     }
-    return p
+    return p;
   }
   updatePostulacionNotas(id: string, notas: string) {
-    const p = this.getPostulacion(id)
+    const p = this.getPostulacion(id);
     if (p) {
-      p.notas = notas
-      p.actualizadoEn = new Date().toISOString()
-      this.addAudit("postulacion", id, "Notas actualizadas", "Se actualizaron las notas internas", "Operador")
+      p.notas = notas;
+      p.actualizadoEn = new Date().toISOString();
+      this.addAudit(
+        "postulacion",
+        id,
+        "Notas actualizadas",
+        "Se actualizaron las notas internas",
+        "Operador",
+      );
     }
-    return p
+    return p;
   }
 
   // --- Proyectos ---
   getProyectos() {
-    return this.proyectos
+    return this.proyectos;
   }
   getProyecto(id: string) {
-    return this.proyectos.find((p) => p.id === id)
+    return this.proyectos.find((p) => p.id === id);
   }
   convertirAProyecto(postulacionId: string): Proyecto | null {
-    const post = this.getPostulacion(postulacionId)
-    if (!post) return null
-    const now = new Date().toISOString()
+    const post = this.getPostulacion(postulacionId);
+    if (!post) return null;
+    const now = new Date().toISOString();
     const proy: Proyecto = {
       id: genId(),
       postulacionId: post.id,
@@ -710,44 +766,70 @@ class IthakaStore {
       hitos: [],
       creadoEn: now,
       actualizadoEn: now,
-    }
-    this.proyectos.unshift(proy)
-    post.estado = "recibida"
-    post.actualizadoEn = now
-    this.addAudit("proyecto", proy.id, "Proyecto creado", `Desde postulacion ${post.id}`, "Sistema")
-    this.addAudit("postulacion", post.id, "Convertida a proyecto", `Proyecto ${proy.id} creado`, "Sistema")
-    return proy
+    };
+    this.proyectos.unshift(proy);
+    post.estado = "recibida";
+    post.actualizadoEn = now;
+    this.addAudit(
+      "proyecto",
+      proy.id,
+      "Proyecto creado",
+      `Desde postulacion ${post.id}`,
+      "Sistema",
+    );
+    this.addAudit(
+      "postulacion",
+      post.id,
+      "Convertida a proyecto",
+      `Proyecto ${proy.id} creado`,
+      "Sistema",
+    );
+    return proy;
   }
   updateProyectoEstado(id: string, estado: EstadoProyecto, usuario: string) {
-    const p = this.getProyecto(id)
+    const p = this.getProyecto(id);
     if (p) {
-      const oldEstado = p.estado
-      p.estado = estado
-      p.actualizadoEn = new Date().toISOString()
-      this.addAudit("proyecto", id, "Cambio de estado", `${oldEstado} -> ${estado}`, usuario)
+      const oldEstado = p.estado;
+      p.estado = estado;
+      p.actualizadoEn = new Date().toISOString();
+      this.addAudit(
+        "proyecto",
+        id,
+        "Cambio de estado",
+        `${oldEstado} -> ${estado}`,
+        usuario,
+      );
     }
-    return p
+    return p;
   }
-  async updateProyectoResponsable(id: string, responsable: string, usuario: string, responsableId?: string) {
-    if (typeof window === "undefined"){
+  async updateProyectoResponsable(
+    id: string,
+    responsable: string,
+    usuario: string,
+    responsableId?: string,
+  ) {
+    if (typeof window === "undefined") {
       return;
     }
 
     try {
-      console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-      const rawToken = localStorage.getItem('token') || "";
-      const token = rawToken.replace(/^"|"$/g, ''); 
+      console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+      const rawToken = localStorage.getItem("token") || "";
+      const token = rawToken.replace(/^"|"$/g, "");
 
       const body = {
-        id_tutor: (responsableId && responsableId !== "sin_asignar") ? Number(responsableId) : null,
-        tutor: responsable
+        id_tutor:
+          responsableId && responsableId !== "sin_asignar"
+            ? Number(responsableId)
+            : null,
+        tutor: responsable,
       };
 
       const { data } = await ithakaApi.put(`/casos/${id}`, body, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       // Actualizamos el objeto local en el Store para que la UI se entere
@@ -755,9 +837,9 @@ class IthakaStore {
       if (p) {
         p.tutor_nombre = responsable;
         p.id_tutor = body.id_tutor;
-        p.responsableIthaka = responsable; 
+        p.responsableIthaka = responsable;
       }
-      
+
       return p;
     } catch (error: any) {
       console.error("Error al guardar:", error.response?.data || error.message);
@@ -767,71 +849,95 @@ class IthakaStore {
 
   // --- Apoyos ---
   addApoyo(proyectoId: string, tipo: TipoApoyo, usuario: string) {
-    const p = this.getProyecto(proyectoId)
-    if (!p) return null
+    const p = this.getProyecto(proyectoId);
+    if (!p) return null;
     const apoyo: Apoyo = {
       id: genId(),
       proyectoId,
       tipo,
       estado: "activo",
       fechaInicio: new Date().toISOString(),
-    }
-    p.apoyos.push(apoyo)
-    p.actualizadoEn = new Date().toISOString()
-    this.addAudit("proyecto", proyectoId, "Apoyo asignado", `${TIPO_APOYO_LABELS[tipo]} - activo`, usuario)
-    return apoyo
+    };
+    p.apoyos.push(apoyo);
+    p.actualizadoEn = new Date().toISOString();
+    this.addAudit(
+      "proyecto",
+      proyectoId,
+      "Apoyo asignado",
+      `${TIPO_APOYO_LABELS[tipo]} - activo`,
+      usuario,
+    );
+    return apoyo;
   }
   toggleApoyoEstado(proyectoId: string, apoyoId: string, usuario: string) {
-    const p = this.getProyecto(proyectoId)
-    if (!p) return null
-    const a = p.apoyos.find((ap) => ap.id === apoyoId)
-    if (!a) return null
-    a.estado = a.estado === "activo" ? "finalizado" : "activo"
-    if (a.estado === "finalizado") a.fechaFin = new Date().toISOString()
-    else a.fechaFin = undefined
-    p.actualizadoEn = new Date().toISOString()
-    this.addAudit("proyecto", proyectoId, "Apoyo actualizado", `${TIPO_APOYO_LABELS[a.tipo]} - ${a.estado}`, usuario)
-    return a
+    const p = this.getProyecto(proyectoId);
+    if (!p) return null;
+    const a = p.apoyos.find((ap) => ap.id === apoyoId);
+    if (!a) return null;
+    a.estado = a.estado === "activo" ? "finalizado" : "activo";
+    if (a.estado === "finalizado") a.fechaFin = new Date().toISOString();
+    else a.fechaFin = undefined;
+    p.actualizadoEn = new Date().toISOString();
+    this.addAudit(
+      "proyecto",
+      proyectoId,
+      "Apoyo actualizado",
+      `${TIPO_APOYO_LABELS[a.tipo]} - ${a.estado}`,
+      usuario,
+    );
+    return a;
   }
 
   // --- Hitos ---
   addHito(proyectoId: string, titulo: string) {
-    const p = this.getProyecto(proyectoId)
-    if (!p) return null
-    const h: Hito = { id: genId(), proyectoId, titulo, completado: false }
-    p.hitos.push(h)
-    p.actualizadoEn = new Date().toISOString()
-    return h
+    const p = this.getProyecto(proyectoId);
+    if (!p) return null;
+    const h: Hito = { id: genId(), proyectoId, titulo, completado: false };
+    p.hitos.push(h);
+    p.actualizadoEn = new Date().toISOString();
+    return h;
   }
   toggleHito(proyectoId: string, hitoId: string) {
-    const p = this.getProyecto(proyectoId)
-    if (!p) return null
-    const h = p.hitos.find((hi) => hi.id === hitoId)
-    if (!h) return null
-    h.completado = !h.completado
-    p.actualizadoEn = new Date().toISOString()
-    return h
+    const p = this.getProyecto(proyectoId);
+    if (!p) return null;
+    const h = p.hitos.find((hi) => hi.id === hitoId);
+    if (!h) return null;
+    h.completado = !h.completado;
+    p.actualizadoEn = new Date().toISOString();
+    return h;
   }
 
   // --- Evaluaciones ---
   setEvaluacion(
     proyectoId: string,
-    data: Omit<Evaluacion, "id" | "proyectoId" | "creadoEn" | "actualizadoEn">
+    data: Omit<Evaluacion, "id" | "proyectoId" | "creadoEn" | "actualizadoEn">,
   ) {
-    const p = this.getProyecto(proyectoId)
-    if (!p) return null
-    const now = new Date().toISOString()
+    const p = this.getProyecto(proyectoId);
+    if (!p) return null;
+    const now = new Date().toISOString();
     if (p.evaluacion) {
-      p.evaluacion = { ...p.evaluacion, ...data, actualizadoEn: now }
+      p.evaluacion = { ...p.evaluacion, ...data, actualizadoEn: now };
     } else {
-      p.evaluacion = { ...data, id: genId(), proyectoId, creadoEn: now, actualizadoEn: now }
+      p.evaluacion = {
+        ...data,
+        id: genId(),
+        proyectoId,
+        creadoEn: now,
+        actualizadoEn: now,
+      };
     }
-    p.actualizadoEn = now
-    return p.evaluacion
+    p.actualizadoEn = now;
+    return p.evaluacion;
   }
 
   // --- Audit ---
-  addAudit(entidadTipo: AuditEntry["entidadTipo"], entidadId: string, accion: string, detalle: string, usuario: string) {
+  addAudit(
+    entidadTipo: AuditEntry["entidadTipo"],
+    entidadId: string,
+    accion: string,
+    detalle: string,
+    usuario: string,
+  ) {
     const entry: AuditEntry = {
       id: genId(),
       entidadTipo,
@@ -840,21 +946,24 @@ class IthakaStore {
       detalle,
       usuario,
       fecha: new Date().toISOString(),
-    }
-    this.auditLog.unshift(entry)
-    return entry
+    };
+    this.auditLog.unshift(entry);
+    return entry;
   }
   getAuditForEntity(entidadId: string) {
-    return this.auditLog.filter((a) => a.entidadId === entidadId)
+    return this.auditLog.filter((a) => a.entidadId === entidadId);
   }
 
   // --- Metrics ---
   getMetrics() {
-    const totalPostulaciones = this.postulaciones.length + this.proyectos.length
+    const totalPostulaciones =
+      this.postulaciones.length + this.proyectos.length;
     const proyectosActivos = this.proyectos.filter(
-      (p) => p.estado === "proyecto_activo" || p.estado === "en_evaluacion"
-    ).length
-    const incubados = this.proyectos.filter((p) => p.estado === "incubado").length
+      (p) => p.estado === "proyecto_activo" || p.estado === "en_evaluacion",
+    ).length;
+    const incubados = this.proyectos.filter(
+      (p) => p.estado === "incubado",
+    ).length;
 
     const allEntities = [
       ...this.postulaciones.map((p) => ({
@@ -871,36 +980,36 @@ class IthakaStore {
           p.tipoPostulante === "alumni" ||
           p.tipoPostulante === "docente_funcionario",
       })),
-    ]
+    ];
 
-    const comunidadUCU = allEntities.filter((e) => e.pertenenciaUCU).length
+    const comunidadUCU = allEntities.filter((e) => e.pertenenciaUCU).length;
     const estudiantesUCU = allEntities.filter(
-      (e) => e.tipoPostulante === "estudiante_ucu"
-    ).length
+      (e) => e.tipoPostulante === "estudiante_ucu",
+    ).length;
     const alumniCount = allEntities.filter(
-      (e) => e.tipoPostulante === "alumni"
-    ).length
+      (e) => e.tipoPostulante === "alumni",
+    ).length;
 
     const conversionPostulacionProyecto =
       totalPostulaciones > 0
         ? Math.round((this.proyectos.length / totalPostulaciones) * 100)
-        : 0
+        : 0;
     const conversionProyectoIncubacion =
       this.proyectos.length > 0
         ? Math.round((incubados / this.proyectos.length) * 100)
-        : 0
+        : 0;
 
     // Distribution by estado
-    const distribucionEstado: Record<string, number> = {}
+    const distribucionEstado: Record<string, number> = {};
     for (const p of this.proyectos) {
-      distribucionEstado[p.estado] = (distribucionEstado[p.estado] || 0) + 1
+      distribucionEstado[p.estado] = (distribucionEstado[p.estado] || 0) + 1;
     }
 
     // Distribution by apoyo
-    const distribucionApoyo: Record<string, number> = {}
+    const distribucionApoyo: Record<string, number> = {};
     for (const p of this.proyectos) {
       for (const a of p.apoyos) {
-        distribucionApoyo[a.tipo] = (distribucionApoyo[a.tipo] || 0) + 1
+        distribucionApoyo[a.tipo] = (distribucionApoyo[a.tipo] || 0) + 1;
       }
     }
 
@@ -920,9 +1029,9 @@ class IthakaStore {
       distribucionEstado,
       distribucionApoyo,
       totalProyectos: this.proyectos.length,
-    }
+    };
   }
 }
 
 // Singleton
-export const store = new IthakaStore()
+export const store = new IthakaStore();

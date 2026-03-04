@@ -8,15 +8,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
-import { Switch } from "@/src/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
 import {
   getEstadoPostulacionLabel,
   getEstadoProyectoLabel,
-  getTipoApoyoLabel,
   useI18n,
 } from "@/src/lib/i18n";
 import { metricasService } from "@/src/services/metricas.service";
 import type { DashboardMetricsResponse } from "@/src/types/dashboard";
+import { useApoyosStore } from "@/src/hooks/useApoyosStore";
 import {
   FileText,
   FolderKanban,
@@ -55,10 +55,15 @@ export function DashboardContent() {
   const [estadoChartMode, setEstadoChartMode] =
     useState<EstadoChartMode>("proyectos");
   const { t, lang } = useI18n();
+  const { status: apoyosStatus, apoyos, catalogo, fetchApoyos } = useApoyosStore();
 
   useEffect(() => {
     metricasService.getDashboard().then(setMetrics);
   }, []);
+
+  useEffect(() => {
+    if (apoyosStatus === "idle") fetchApoyos();
+  }, [apoyosStatus, fetchApoyos]);
 
   if (!metrics) {
     return (
@@ -95,16 +100,23 @@ export function DashboardContent() {
     };
   });
 
-  const apoyoData = [...metrics.distribucion_apoyos]
+  // For each apoyo type, count distinct projects (id_caso) that have it assigned
+  const apoyoData = catalogo
+    .map((item) => {
+      const proyectos = new Set(
+        apoyos
+          .filter((a) => a.idCatalogoApoyo === item.id_catalogo_apoyo)
+          .map((a) => a.idCaso),
+      );
+      return { label: item.nombre, cantidad: proyectos.size };
+    })
+    .filter((d) => d.cantidad > 0)
     .sort((a, b) => b.cantidad - a.cantidad)
     .slice(0, 5)
-    .map((apoyo) => ({
-      name:
-        getTipoApoyoLabel(
-          lang,
-          apoyo.label as Parameters<typeof getTipoApoyoLabel>[1],
-        ) || apoyo.label,
-      value: apoyo.cantidad,
+    .map((d) => ({
+      name: d.label.length > 22 ? d.label.slice(0, 20) + "…" : d.label,
+      fullName: d.label,
+      value: d.cantidad,
     }));
 
   return (
@@ -161,39 +173,34 @@ export function DashboardContent() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between gap-4">
-              <CardTitle className="text-base">
-                {estadoChartMode === "proyectos"
-                  ? t("dashboard.proyectosPorEstado")
-                  : t("dashboard.postulacionesPorEstado")}
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
+            <CardTitle className="text-base">Métricas por estados</CardTitle>
+            <Tabs
+              value={estadoChartMode}
+              onValueChange={(value) =>
+                setEstadoChartMode(value as EstadoChartMode)
+              }
+              className="mt-2"
+            >
+              <TabsList>
+                <TabsTrigger value="proyectos">
                   {t("dashboard.switchProyectos")}
-                </span>
-                <Switch
-                  checked={estadoChartMode === "postulaciones"}
-                  onCheckedChange={(checked) =>
-                    setEstadoChartMode(checked ? "postulaciones" : "proyectos")
-                  }
-                  aria-label={t("dashboard.switchEstados")}
-                />
-                <span className="text-xs text-muted-foreground">
+                </TabsTrigger>
+                <TabsTrigger value="postulaciones">
                   {t("dashboard.switchPostulaciones")}
-                </span>
-              </div>
-            </div>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </CardHeader>
           <CardContent>
             {estadoData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
+              <ResponsiveContainer width="100%" height={320}>
+                <PieChart margin={{ top: 20, right: 20, bottom: 8, left: 20 }}>
                   <Pie
                     data={estadoData}
                     cx="50%"
-                    cy="50%"
+                    cy="56%"
                     innerRadius={60}
-                    outerRadius={100}
+                    outerRadius={88}
                     paddingAngle={3}
                     dataKey="value"
                     label={({ name, value }) => `${name}: ${value}`}
@@ -229,14 +236,28 @@ export function DashboardContent() {
           <CardContent>
             {apoyoData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={apoyoData}>
+                <BarChart
+                  data={apoyoData}
+                  margin={{ top: 4, right: 8, left: 0, bottom: 56 }}
+                >
                   <CartesianGrid
                     strokeDasharray="3 3"
                     className="stroke-border"
                   />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 11 }}
+                    interval={0}
+                    angle={-35}
+                    textAnchor="end"
+                  />
                   <YAxis allowDecimals={false} />
-                  <Tooltip />
+                  <Tooltip
+                    formatter={(value) => [value, t("proyectos.apoyos")]}
+                    labelFormatter={(_, payload) =>
+                      payload?.[0]?.payload?.fullName ?? ""
+                    }
+                  />
                   <Bar
                     dataKey="value"
                     fill="hsl(215, 80%, 48%)"

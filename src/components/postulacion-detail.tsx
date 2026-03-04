@@ -1,35 +1,98 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs"
-import { Button } from "@/src/components/ui/button"
-import { Label } from "@/src/components/ui/label"
-import { Textarea } from "@/src/components/ui/textarea"
-import { Badge } from "@/src/components/ui/badge"
+import { NotasTab } from "@/src/components/notas-tab";
+import { StatusBadge } from "@/src/components/status-badge";
+import { Button } from "@/src/components/ui/button";
 import {
-  ArrowLeft,
-  User,
-  Calendar,
-  FileText,
-  CheckCircle2,
-  XCircle,
-  Loader2,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/src/components/ui/tabs";
+import { useEstadosStore, usePostulacionesStore } from "@/src/hooks";
+import { toast } from "@/src/hooks/use-toast";
+import {
   AlertCircle,
-} from "lucide-react"
-import Link from "next/link"
-import { usePostulacionesStore } from "@/src/hooks"
+  ArrowLeft,
+  Calendar,
+  CheckCircle2,
+  FileText,
+  Loader2,
+  User,
+  XCircle,
+} from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+const normalizeEstado = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_");
 
 export function PostulacionDetail({ id }: { id: string }) {
-  const { status, selectedPostulacion, errorMessage, fetchPostulacion, resetPostulacion } = usePostulacionesStore()
-  const [notas, setNotas] = useState("")
+  const {
+    status,
+    selectedPostulacion,
+    errorMessage,
+    fetchPostulacion,
+    updatePostulacionEstado,
+    resetPostulacion,
+  } = usePostulacionesStore();
+  const { estados, fetchEstados } = useEstadosStore();
+  const [pendingEstado, setPendingEstado] = useState("");
+  const [savingEstado, setSavingEstado] = useState(false);
 
-  const postulacionId = Number(id)
+  const postulacionId = Number(id);
+  const estadosPostulacion = estados.filter(
+    (estado) =>
+      normalizeEstado(String(estado.tipo_caso ?? "")) === "postulacion",
+  );
+  const sourceEstados =
+    estadosPostulacion.length > 0 ? estadosPostulacion : estados;
+  const estadoOptions = sourceEstados
+    .map((estado) => {
+      const rawName = String(estado.nombre_estado ?? "").trim();
+      return {
+        value: rawName,
+        label: rawName,
+      };
+    })
+    .filter((estado) => Boolean(estado.value))
+    .filter(
+      (estado, index, array) =>
+        array.findIndex(
+          (item) =>
+            normalizeEstado(item.value) === normalizeEstado(estado.value),
+        ) === index,
+    );
 
   useEffect(() => {
-    if (!isNaN(postulacionId)) fetchPostulacion(postulacionId)
-    return () => { resetPostulacion() }
-  }, [postulacionId])
+    if (!isNaN(postulacionId)) fetchPostulacion(postulacionId);
+    return () => {
+      resetPostulacion();
+    };
+  }, [postulacionId]);
+
+  useEffect(() => {
+    fetchEstados();
+  }, [fetchEstados]);
 
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString("es-UY", {
@@ -38,7 +101,47 @@ export function PostulacionDetail({ id }: { id: string }) {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    })
+    });
+  }
+
+  const estadoActual = String(selectedPostulacion?.nombre_estado ?? "").trim();
+  const pendingEstadoValue = String(pendingEstado ?? "").trim();
+  const estadoSeleccionado = estadoOptions.find(
+    (estado) =>
+      normalizeEstado(estado.value) ===
+      normalizeEstado(pendingEstadoValue || estadoActual),
+  );
+  const selectedEstadoValue = estadoSeleccionado?.value ?? "";
+
+  useEffect(() => {
+    if (selectedPostulacion?.nombre_estado) {
+      setPendingEstado(selectedPostulacion.nombre_estado);
+    }
+  }, [selectedPostulacion?.nombre_estado]);
+
+  function handleEstadoChange(estado: string) {
+    if (!estado) return;
+    setPendingEstado(estado);
+  }
+
+  async function handleGuardarCambiosEstado() {
+    const willChangeEstado =
+      Boolean(selectedEstadoValue) &&
+      normalizeEstado(selectedEstadoValue) !== normalizeEstado(estadoActual);
+
+    if (!willChangeEstado) return;
+
+    try {
+      setSavingEstado(true);
+      await updatePostulacionEstado(postulacionId, selectedEstadoValue);
+      await fetchPostulacion(postulacionId);
+      toast({ title: "Estado actualizado" });
+    } catch (error) {
+      console.error("Error al actualizar estado de postulación:", error);
+      toast({ title: "Error al guardar", variant: "destructive" });
+    } finally {
+      setSavingEstado(false);
+    }
   }
 
   if (isNaN(postulacionId)) {
@@ -46,7 +149,7 @@ export function PostulacionDetail({ id }: { id: string }) {
       <div className="p-6 lg:p-8">
         <p className="text-destructive text-sm">ID de postulacion invalido.</p>
       </div>
-    )
+    );
   }
 
   if (status === "loading") {
@@ -55,7 +158,7 @@ export function PostulacionDetail({ id }: { id: string }) {
         <Loader2 className="h-4 w-4 animate-spin" />
         <span className="text-sm">Cargando postulacion...</span>
       </div>
-    )
+    );
   }
 
   if (status === "error") {
@@ -70,15 +173,17 @@ export function PostulacionDetail({ id }: { id: string }) {
         </Link>
         <div className="flex items-center gap-2 text-destructive">
           <AlertCircle className="h-4 w-4" />
-          <p className="text-sm">{errorMessage ?? "No se pudo cargar el caso."}</p>
+          <p className="text-sm">
+            {errorMessage ?? "No se pudo cargar el caso."}
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
-  if (!selectedPostulacion) return null
+  if (!selectedPostulacion) return null;
 
-  const postulacion = selectedPostulacion
+  const postulacion = selectedPostulacion;
 
   return (
     <div className="p-6 lg:p-8">
@@ -90,16 +195,55 @@ export function PostulacionDetail({ id }: { id: string }) {
           <ArrowLeft className="h-4 w-4 mr-1" />
           Volver a postulaciones
         </Link>
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">{postulacion.nombre_caso}</h1>
-          <Badge variant="outline" className="text-xs font-medium bg-primary/10 text-primary border-primary/20">
-            Estado #{postulacion.id_estado}
-          </Badge>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">{postulacion.nombre_caso}</h1>
+            <StatusBadge
+              status={normalizeEstado(postulacion.nombre_estado ?? "")}
+            />
+          </div>
+          <Button
+            onClick={handleGuardarCambiosEstado}
+            disabled={
+              savingEstado ||
+              !selectedEstadoValue ||
+              normalizeEstado(selectedEstadoValue) ===
+                normalizeEstado(estadoActual)
+            }
+          >
+            {savingEstado ? "Guardando..." : "Guardar cambios"}
+          </Button>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
           Postulación #{postulacion.id_caso}
         </p>
       </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-base">Estado de postulación</CardTitle>
+          <CardDescription>
+            Cambiá el estado usando el mismo flujo de casos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Select
+            value={selectedEstadoValue}
+            onValueChange={handleEstadoChange}
+          >
+            <SelectTrigger disabled={estadoOptions.length === 0}>
+              <SelectValue placeholder="Seleccioná un estado" />
+            </SelectTrigger>
+            <SelectContent>
+              {estadoOptions.map((estado) => (
+                <SelectItem key={estado.value} value={estado.value}>
+                  {estado.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 sm:grid-cols-3 mb-6">
         <Card>
@@ -109,7 +253,9 @@ export function PostulacionDetail({ id }: { id: string }) {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Emprendedor</p>
-              <p className="text-sm font-medium">ID #{postulacion.id_emprendedor}</p>
+              <p className="text-sm font-medium">
+                ID #{postulacion.id_emprendedor}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -137,7 +283,9 @@ export function PostulacionDetail({ id }: { id: string }) {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Fecha</p>
-              <p className="text-sm font-medium">{formatDate(postulacion.fecha_creacion)}</p>
+              <p className="text-sm font-medium">
+                {formatDate(postulacion.fecha_creacion)}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -158,80 +306,72 @@ export function PostulacionDetail({ id }: { id: string }) {
               <CardContent>
                 <div className="flex items-start gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <p className="text-sm leading-relaxed">{postulacion.descripcion}</p>
+                  <p className="text-sm leading-relaxed">
+                    {postulacion.descripcion}
+                  </p>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {postulacion.datos_chatbot && Object.keys(postulacion.datos_chatbot).length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Respuestas del formulario</CardTitle>
-                <CardDescription>
-                  Informacion estructurada recopilada por el chatbot
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <dl className="space-y-3">
-                  {Object.entries(postulacion.datos_chatbot).map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="grid grid-cols-[1fr_2fr] gap-x-4 gap-y-1 border-b border-border/50 pb-3 last:border-0 last:pb-0"
-                    >
-                      <dt className="text-xs font-medium text-muted-foreground capitalize">
-                        {key.replace(/_/g, " ")}
-                      </dt>
-                      <dd className="text-sm text-foreground">
-                        {typeof value === "boolean"
-                          ? value ? "Si" : "No"
-                          : Array.isArray(value)
-                          ? value.join(", ")
-                          : typeof value === "object" && value !== null
-                          ? JSON.stringify(value)
-                          : String(value ?? "—")}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </CardContent>
-            </Card>
-          )}
+          {postulacion.datos_chatbot &&
+            Object.keys(postulacion.datos_chatbot).length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    Respuestas del formulario
+                  </CardTitle>
+                  <CardDescription>
+                    Informacion estructurada recopilada por el chatbot
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <dl className="space-y-3">
+                    {Object.entries(postulacion.datos_chatbot).map(
+                      ([key, value]) => (
+                        <div
+                          key={key}
+                          className="grid grid-cols-[1fr_2fr] gap-x-4 gap-y-1 border-b border-border/50 pb-3 last:border-0 last:pb-0"
+                        >
+                          <dt className="text-xs font-medium text-muted-foreground capitalize">
+                            {key.replace(/_/g, " ")}
+                          </dt>
+                          <dd className="text-sm text-foreground">
+                            {typeof value === "boolean"
+                              ? value
+                                ? "Si"
+                                : "No"
+                              : Array.isArray(value)
+                                ? value.join(", ")
+                                : typeof value === "object" && value !== null
+                                  ? JSON.stringify(value)
+                                  : String(value ?? "—")}
+                          </dd>
+                        </div>
+                      ),
+                    )}
+                  </dl>
+                </CardContent>
+              </Card>
+            )}
 
-          {!postulacion.descripcion && (!postulacion.datos_chatbot || Object.keys(postulacion.datos_chatbot).length === 0) && (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <p className="text-sm text-muted-foreground">Sin datos adicionales disponibles.</p>
-              </CardContent>
-            </Card>
-          )}
+          {!postulacion.descripcion &&
+            (!postulacion.datos_chatbot ||
+              Object.keys(postulacion.datos_chatbot).length === 0) && (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Sin datos adicionales disponibles.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
         </TabsContent>
 
         <TabsContent value="notas">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Notas internas</CardTitle>
-              <CardDescription>
-                Observaciones y comentarios internos sobre este caso
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <Label>Notas</Label>
-                <Textarea
-                  value={notas}
-                  onChange={(e) => setNotas(e.target.value)}
-                  placeholder="Observaciones, comentarios internos..."
-                  rows={6}
-                />
-                <Button size="sm" disabled>
-                  Guardar notas
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <NotasTab id_caso={postulacion.id_caso} />
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

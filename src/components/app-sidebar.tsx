@@ -1,30 +1,51 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import Logout from "@/public/logout.png";
-import Image from "next/image";
+import { useRole } from "@/src/components/role-context";
+import { useSettings } from "@/src/components/settings-context";
+import { env } from "@/src/helpers/getEnvVariables";
+import { useAuthStore } from "@/src/hooks/useAuthStore";
+import { useI18n } from "@/src/lib/i18n";
+import { cn } from "@/src/lib/utils";
 import {
-  LayoutDashboard,
-  Inbox,
-  FolderKanban,
-  ClipboardCheck,
   ChevronLeft,
   ChevronRight,
-  Users,
-  Settings as SettingsIcon,
+  ClipboardCheck,
+  FolderKanban,
   HandHeart,
+  Inbox,
+  LayoutDashboard,
+  Plus,
+  Settings as SettingsIcon,
+  Users,
 } from "lucide-react";
-import { cn } from "@/src/lib/utils";
-import { useState } from "react";
-import { useRole } from "@/src/components/role-context";
-import { useAuthStore } from "@/src/hooks/useAuthStore";
-import { useSettings } from "@/src/components/settings-context";
-import { useI18n } from "@/src/lib/i18n";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import React, { useState } from "react";
 
-const navItems = [
+function normalizeExternalUrl(url: string) {
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+  return `http://${url}`;
+}
+
+const navItems: {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  adminOnly?: boolean;
+  external?: boolean;
+}[] = [
   { href: "/", label: "nav.dashboard", icon: LayoutDashboard },
   { href: "/postulaciones", label: "nav.postulaciones", icon: Inbox },
+  {
+    href: "/chatbot",
+    label: "nav.nuevaPostulacion",
+    icon: Plus,
+    external: true,
+  },
   { href: "/proyectos", label: "nav.proyectos", icon: FolderKanban },
   { href: "/evaluaciones", label: "nav.evaluaciones", icon: ClipboardCheck },
   { href: "/apoyos", label: "Apoyos", icon: HandHeart },
@@ -94,11 +115,11 @@ export function AppSidebar() {
             // Filtrar items según el rol
             let items = navItems;
             if (role === "tutor") {
-              // Tutor: solo Dashboard y Proyectos
+              // Tutor: Dashboard y Proyectos
               items = navItems.filter(
                 (i) => i.href === "/" || i.href === "/proyectos",
               );
-            } else if (role === "coordinador"|| role === "operador") {
+            } else if (role === "coordinador" || role === "operador") {
               // Coordinador: todo excepto Gestión de Usuarios
               items = navItems.filter((i) => !i.adminOnly);
             }
@@ -113,6 +134,8 @@ export function AppSidebar() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    target={item.external ? "_blank" : undefined}
+                    rel={item.external ? "noopener noreferrer" : undefined}
                     className={cn(
                       "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                       isActive
@@ -135,8 +158,13 @@ export function AppSidebar() {
         <div className="flex items-center justify-between">
           {!isCompact && (
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-medium">{user?.name || t("user.guest")}</span> {/* aca*/}
-              <span className="text-xs text-sidebar-foreground/60">{roleLabel || role}</span>
+              <span className="text-sm font-medium">
+                {user?.name || t("user.guest")}
+              </span>{" "}
+              {/* aca*/}
+              <span className="text-xs text-sidebar-foreground/60">
+                {roleLabel || role}
+              </span>
             </div>
           )}
 
@@ -179,7 +207,7 @@ export function AppSidebar() {
         </button>
       )}
 
-      {role === "admin" && (
+      {role === "coordinador" && (
         <button
           onClick={handleToggle}
           className={cn(
@@ -196,6 +224,22 @@ export function AppSidebar() {
         </button>
       )}
 
+      {role === "admin" && (
+        <button
+          onClick={handleToggle}
+          className={cn(
+            "absolute bottom-1/4 translate-x-1/2 -translate-y-1/2 z-50",
+            "rounded-full border bg-sidebar p-2 shadow-md",
+          )}
+          aria-label={isCompact ? t("sidebar.expand") : t("sidebar.collapse")}
+        >
+          {isCompact ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </button>
+      )}
 
       {/* Confirmacion de logout */}
       {showLogoutConfirm && (
@@ -204,9 +248,7 @@ export function AppSidebar() {
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
               {t("logout.title")}
             </h2>
-            <p className="text-gray-600 text-sm mb-6">
-              {t("logout.message")}
-            </p>
+            <p className="text-gray-600 text-sm mb-6">{t("logout.message")}</p>
 
             <div className="flex gap-3 justify-end">
               <button
@@ -216,7 +258,10 @@ export function AppSidebar() {
                 {t("logout.cancel")}
               </button>
               <button
-                onClick={() => { startLogout(); setShowLogoutConfirm(false); }}
+                onClick={() => {
+                  startLogout();
+                  setShowLogoutConfirm(false);
+                }}
                 className="px-4 py-2 rounded-md text-white bg-red-600 hover:bg-red-700 transition text-sm font-medium"
               >
                 {t("logout.confirm")}
